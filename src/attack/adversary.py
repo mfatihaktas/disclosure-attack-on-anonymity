@@ -26,3 +26,7 @@ class Adversary(abc.ABC):
     @abc.abstractmethod
     def server_recved_msg(self, msg: message.Message):
         pass
+
+    @abc.abstractmethod
+    def server_sent_msg(self, msg: message.Message):
+        pass

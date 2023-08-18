@@ -1,8 +1,9 @@
 import simpy
 
 from src.attack import adversary as adversary_module
-from src.debug_utils import *
 from src.sim import message, node
+
+from src.debug_utils import *
 
 
 class Server(node.Node):
@@ -13,6 +14,7 @@ class Server(node.Node):
     ):
         super().__init__(env=env, _id=_id)
 
+        self.num_msgs_sent = 0
         self.adversary: adversary_module.Adversary = None
 
         self.msg_store = simpy.Store(env)
@@ -29,8 +31,8 @@ class Server(node.Node):
     def put(self, msg: message.Message):
         slog(DEBUG, self.env, self, "recved", msg=msg)
 
-        if self.adversary:
-            self.adversary.server_recved_msg(server_id=self._id)
+        # if self.adversary:
+        #     self.adversary.server_recved_msg(server_id=self._id)
 
         self.msg_store.put(msg)
 
@@ -42,15 +44,30 @@ class Server(node.Node):
             msg = yield self.msg_store.get()
             num_msgs_recved += 1
             slog(
-                DEBUG,
-                self.env,
-                self,
+                DEBUG, self.env, self,
                 "processed",
                 num_msgs_recved=num_msgs_recved,
                 msg=msg,
             )
 
-            if self.num_msgs_to_recv and num_msgs_recved >= self.num_msgs_to_recv:
-                break
+            if msg._type == message.MessageType.GET:
+                for _ in range(msg.num_msgs_to_recv):
+                    msg_ = message.Message(
+                        _id=self.num_msgs_sent,
+                        _type=message.MessageType.DATA,
+                        src_id=msg.dst_id,
+                        dst_id=msg.src_id,
+                    )
+                    slog(
+                        DEBUG, self.env, self,
+                        "sent",
+                        num_msgs_sent=self.num_msgs_sent,
+                        msg=msg_,
+                    )
+
+                    self.num_msgs_sent += 1
+
+                    if self.adversary:
+                        self.adversary.server_sent_msg(msg=msg_)
 
         slog(DEBUG, self.env, self, "done")
