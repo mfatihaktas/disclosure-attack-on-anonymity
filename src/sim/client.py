@@ -11,12 +11,14 @@ class Client(node.Node):
         self,
         env: simpy.Environment,
         _id: str,
-        inter_msg_gen_time_rv: random_variable.RandomVariable,
-        num_msgs_to_send: int = None,
+        server_id_list: list[int],
+        idle_time_rv: random_variable.RandomVariable,
+        num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     ):
         super().__init__(env=env, _id=_id)
-        self.num_msgs_to_send = num_msgs_to_send
-        self.inter_msg_gen_time_rv = inter_msg_gen_time_rv
+        self.server_id_list = server_id_list
+        self.idle_time_rv = idle_time_rv
+        self.num_msgs_to_recv_for_get_request_rv = num_msgs_to_recv_for_get_request_rv
 
         # To be set while getting connected to the network
         self.next_hop = None
@@ -24,37 +26,69 @@ class Client(node.Node):
 
         self.adversary: adversary_module.Adversary = None
 
+        self.token_store = simpy.Store(env)
         self.process_send_messages = env.process(self.send_messages())
+
+        self.num_msgs_to_recv_for_get_request = None
+        self.num_msgs_recved_for_get_request = 0
 
     def __repr__(self):
         # return (
         #     "Client( \n"
         #     f"{super().__repr__()} \n"
         #     f"\t dst_id= {self.dst_id} \n"
-        #     f"\t num_msgs_to_send= {self.num_msgs_to_send} \n"
-        #     f"\t inter_msg_gen_time_rv= {self.inter_msg_gen_time_rv} \n"
+        #     f"\t server_id_list= {self.server_id_list} \n"
+        #     f"\t idle_time_rv= {self.idle_time_rv} \n"
         #     ")"
         # )
 
         return f"Client(id= {self._id})"
+
+    def put(self, msg: message.Message):
+        slog(DEBUG, self.env, self, "recved", msg=msg)
+
+        self.num_msgs_recved_for_get_request += 1
+        if self.num_msgs_recved_for_get_request == self.num_msgs_to_recv_for_get_request:
+            slog(
+                DEBUG, self.env, self,
+                "received all msgs for GET request",
+                num_msgs_recved_for_get_request=self.num_msgs_recved_for_get_request
+            )
+            self.adversary.client_completed_get_request(
+                num_msgs_recved_for_get_request=self.num_msgs_recved_for_get_request
+            )
 
     def send_messages(self):
         slog(DEBUG, self.env, self, "started")
 
         msg_id = 0
         while True:
-            inter_msg_gen_time = self.inter_msg_gen_time_rv.sample()
-            slog(
-                DEBUG, self.env, self, "waiting", inter_msg_gen_time=inter_msg_gen_time
-            )
-            yield self.env.timeout(inter_msg_gen_time)
+            yield self.token_store.get()
 
-            msg = message.Message(_id=msg_id, src_id=self._id, dst_id=self.dst_id)
+            # Wait idle
+            idle_time = self.idle_time_rv.sample()
+            slog(
+                DEBUG, self.env, self, "waiting idle", idle_time=idle_time
+            )
+            yield self.env.timeout(idle_time)
+
+            # Send GET request
+            server_id = random.choice(self.server_id_list)
+            self.num_msgs_to_recv_for_get_request = self.num_msgs_to_recv_for_get_request_rv.sample()
+            msg = message.GetRequest(
+                _id=msg_id,
+                src_id=self._id,
+                dst_id=server_id,
+                num_msgs_to_recv=self.num_msgs_to_recv_for_get_request,
+            )
             slog(DEBUG, self.env, self, "sending", msg=msg)
             self.next_hop.put(msg)
             if self.adversary:
-                self.adversary.client_sent_msg(client_id=self._id)
+                self.adversary.client_sent_msg(msg=msg)
+
+            # Prepare for response
+            self.num_msgs_recved_for_get_request = 0
 
             msg_id += 1
-            if self.num_msgs_to_send and msg_id >= self.num_msgs_to_send:
-                break
+
+        slog(DEBUG, self.env, self, "done")

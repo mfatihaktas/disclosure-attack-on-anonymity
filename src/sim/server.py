@@ -10,15 +10,13 @@ class Server(node.Node):
         self,
         env: simpy.Environment,
         _id: str,
-        num_msgs_to_recv: int = None,
     ):
         super().__init__(env=env, _id=_id)
-        self.num_msgs_to_recv = num_msgs_to_recv
 
         self.adversary: adversary_module.Adversary = None
 
         self.msg_store = simpy.Store(env)
-        self.process_recv_messages = env.process(self.recv_messages())
+        self.recv_messages_process = env.process(self.recv_messages())
 
     def __repr__(self):
         # return (
@@ -26,7 +24,6 @@ class Server(node.Node):
         #     f"{super().__repr__()} \n"
         #     ")"
         # )
-
         return f"Server(id= {self._id})"
 
     def put(self, msg: message.Message):

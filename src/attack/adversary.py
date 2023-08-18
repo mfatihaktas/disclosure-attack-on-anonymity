@@ -1,6 +1,7 @@
 import abc
-
 import simpy
+
+from src.sim import message
 
 
 class Adversary(abc.ABC):
@@ -15,9 +16,13 @@ class Adversary(abc.ABC):
         self.num_target_client = num_target_client
 
     @abc.abstractmethod
-    def client_sent_msg(self, client_id: str):
+    def client_sent_msg(self, msg: message.Message):
         pass
 
     @abc.abstractmethod
-    def server_recved_msg(self, server_id: str):
+    def client_completed_get_request(self, num_msgs_recved_for_get_request: int):
+        pass
+
+    @abc.abstractmethod
+    def server_recved_msg(self, msg: message.Message):
         pass
