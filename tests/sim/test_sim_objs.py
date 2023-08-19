@@ -94,7 +94,7 @@ def tor_system(
     idle_time_rv: random_variable.RandomVariable,
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
 ) -> tor_module.TorSystem:
-    tor_system = tor_module.TorSystem(
+    return tor_module.TorSystem(
         env=env,
         num_clients=num_clients,
         num_servers=num_servers,
@@ -103,8 +103,6 @@ def tor_system(
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         num_target_servers=1,
     )
-
-    return network
 
 
 # def test_network_w_one_client_server(
@@ -124,7 +122,6 @@ def test_DisclosureAttack(
     tor_system: tor_module.TorSystem,
 ):
     env = tor_system.env
-
     adversary = disclosure_attack.DisclosureAttack(
         env=env,
         max_msg_delivery_time=tor_system.network_delay_rv.max_value,

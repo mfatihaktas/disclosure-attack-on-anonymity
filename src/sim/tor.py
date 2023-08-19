@@ -9,7 +9,7 @@ from src.sim import client as client_module
 from src.sim import network as network_module
 from src.sim import server as server_module
 
-from src.debug_utils import *
+from src.debug_utils import check, DEBUG, log
 
 
 class TorSystem():
@@ -28,8 +28,9 @@ class TorSystem():
         self.env = env
         self.num_clients = num_clients
         self.num_servers = num_servers
-        self.inter_msg_gen_time_rv = inter_msg_gen_time_rv
         self.network_delay_rv = network_delay_rv
+        self.idle_time_rv = idle_time_rv
+        self.num_msgs_to_recv_for_get_request_rv = num_msgs_to_recv_for_get_request_rv
         self.num_target_servers = num_target_servers
 
         # Network
@@ -57,8 +58,8 @@ class TorSystem():
                 env=self.env,
                 _id=f"c{i}",
                 server_id_list=[
-                    self.server_list[(i + j) % num_servers]
-                    for j in num_target_servers
+                    self.server_list[(i + j) % num_servers]._id
+                    for j in range(num_target_servers)
                 ],
                 idle_time_rv=idle_time_rv,
                 num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,

@@ -3,11 +3,9 @@ import collections
 import simpy
 
 from src.attack import adversary as adversary_module
-from src.debug_utils import *
-from src.sim import client as client_module
 from src.sim import message
-from src.sim import node as node_module
-from src.sim import server as server_module
+
+from src.debug_utils import log, DEBUG, slog
 
 
 class DisclosureAttack(adversary_module.Adversary):
