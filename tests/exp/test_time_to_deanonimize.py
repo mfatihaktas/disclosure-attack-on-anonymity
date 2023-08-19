@@ -9,7 +9,7 @@ from src.plot_utils import *
 
 
 def test_plot_avg_time_to_deanonymize_vs_num_servers():
-    num_clients = 5 # 10
+    num_clients = 5  # 10
     inter_msg_gen_time_rv = random_variable.Exponential(mu=1)
     network_delay_rv = random_variable.DiscreteUniform(min_value=1, max_value=5)
     num_target_client = 1
