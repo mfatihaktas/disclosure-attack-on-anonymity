@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "deanonymize-tor"
+name = "disclosure-attack-on-anonymity"
 version = "0.1.0"
 description = ""
-authors = ["Mehmet Aktas <mehmet@overjet.ai>"]
+authors = ["Mehmet Aktas <mfatihaktas@gmail.com>"]
 packages = [
     { include = "src" }
 ]
