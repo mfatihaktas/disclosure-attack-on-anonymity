@@ -2,7 +2,7 @@ import simpy
 
 from src.attack import (
     adversary as adversary_module,
-    intersection_attack,
+    disclosure_attack,
 )
 from src.prob import random_variable
 from src.sim import client as client_module
@@ -18,18 +18,19 @@ class TorSystem():
         env: simpy.Environment,
         num_clients: int,
         num_servers: int,
-        inter_msg_gen_time_rv: random_variable.RandomVariable,
         network_delay_rv: random_variable.RandomVariable,
-        num_target_client: int,
+        idle_time_rv: random_variable.RandomVariable,
+        num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
+        num_target_servers: int,
     ):
-        check(num_target_client <= num_clients, "num_target_client should be less than num_clients")
+        check(num_target_servers <= num_servers, "")
 
         self.env = env
         self.num_clients = num_clients
         self.num_servers = num_servers
         self.inter_msg_gen_time_rv = inter_msg_gen_time_rv
         self.network_delay_rv = network_delay_rv
-        self.num_target_client = num_target_client
+        self.num_target_servers = num_target_servers
 
         # Network
         self.network = network_module.Network_wDelayAssignedPerMessage(
@@ -55,10 +56,14 @@ class TorSystem():
             client = client_module.Client(
                 env=self.env,
                 _id=f"c{i}",
-                inter_msg_gen_time_rv=self.inter_msg_gen_time_rv,
+                server_id_list=[
+                    self.server_list[(i + j) % num_servers]
+                    for j in num_target_servers
+                ],
+                idle_time_rv=idle_time_rv,
+                num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             )
             client.next_hop = self.network
-            client.dst_id = self.server_list[i % num_servers]._id
             self.client_list.append(client)
 
             self.network.register_client(client)
@@ -66,26 +71,21 @@ class TorSystem():
     def register_adversary(self, adversary: adversary_module.Adversary):
         self.adversary = adversary
 
-        for client in self.network.get_client_list()[: self.num_target_client]:
-            client.adversary = self.adversary
+        self.network.get_client_list()[0].adversary = self.adversary
 
         for server in self.network.get_server_list():
             server.adversary = self.adversary
 
-        log(
-            DEBUG,
-            "Registered \n"
-            f" adversary= {adversary}"
-        )
+        log(DEBUG, "Registered \n", adversary=adversary)
 
     def __repr__(self):
         return (
             "TorSystem( \n"
             f"\t num_clients= {self.num_clients} \n"
             f"\t num_servers= {self.num_servers} \n"
-            f"\t inter_msg_gen_time_rv= {self.inter_msg_gen_time_rv} \n"
             f"\t network_delay_rv= {self.network_delay_rv} \n"
-            f"\t num_target_client= {self.num_target_client} \n"
+            f"\t idle_time_rv= {self.idle_time_rv} \n"
+            f"\t num_msgs_to_recv_for_get_request_rv= {self.num_msgs_to_recv_for_get_request_rv} \n"
             f"\t network= {self.network} \n"
             ")"
         )
@@ -101,12 +101,13 @@ class TorSystem():
         log(DEBUG, "Done")
 
 
-def sim_time_to_deanonymize_w_intersection_attack(
+def sim_time_to_deanonymize_w_disclosure_attack(
     num_clients: int,
     num_servers: int,
-    inter_msg_gen_time_rv: random_variable.RandomVariable,
     network_delay_rv: random_variable.RandomVariable,
-    num_target_client: int,
+    idle_time_rv: random_variable.RandomVariable,
+    num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
+    num_target_servers: int,
     num_samples: int,
 ) -> list[float]:
     def sim() -> float:
@@ -116,15 +117,16 @@ def sim_time_to_deanonymize_w_intersection_attack(
             env=env,
             num_clients=num_clients,
             num_servers=num_servers,
-            inter_msg_gen_time_rv=inter_msg_gen_time_rv,
             network_delay_rv=network_delay_rv,
-            num_target_client=num_target_client,
+            idle_time_rv=idle_time_rv,
+            num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+            num_target_servers=num_target_servers,
         )
 
-        adversary = intersection_attack.Adversary_wIntersectionAttack(
+        adversary = disclosure_attack.DisclosureAttack(
             env=env,
             max_msg_delivery_time=network_delay_rv.max_value,
-            num_target_client=1,
+            error_percent=0.1,
         )
 
         tor.register_adversary(adversary=adversary)

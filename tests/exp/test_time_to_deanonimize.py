@@ -28,7 +28,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     for num_servers in range(1, 7):
         log(INFO, f">> num_servers= {num_servers}")
 
-        time_to_deanonymize_list = tor_module.sim_time_to_deanonymize_w_intersection_attack(
+        time_to_deanonymize_list = tor_module.sim_time_to_deanonymize_w_disclosure_attack(
             num_clients=num_clients,
             num_servers=num_servers,
             inter_msg_gen_time_rv=inter_msg_gen_time_rv,
