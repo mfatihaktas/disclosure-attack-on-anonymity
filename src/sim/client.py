@@ -1,9 +1,11 @@
+import random
 import simpy
 
 from src.attack import adversary as adversary_module
-from src.debug_utils import *
 from src.prob import random_variable
 from src.sim import message, node
+
+from src.debug_utils import DEBUG, slog
 
 
 class Client(node.Node):
@@ -22,11 +24,11 @@ class Client(node.Node):
 
         # To be set while getting connected to the network
         self.next_hop = None
-        self.dst_id = None
 
         self.adversary: adversary_module.Adversary = None
 
         self.token_store = simpy.Store(env)
+        self.token_store.put(1)
         self.process_send_messages = env.process(self.send_messages())
 
         self.num_msgs_to_recv_for_get_request = None
@@ -36,7 +38,6 @@ class Client(node.Node):
         # return (
         #     "Client( \n"
         #     f"{super().__repr__()} \n"
-        #     f"\t dst_id= {self.dst_id} \n"
         #     f"\t server_id_list= {self.server_id_list} \n"
         #     f"\t idle_time_rv= {self.idle_time_rv} \n"
         #     ")"
@@ -54,9 +55,13 @@ class Client(node.Node):
                 "received all msgs for GET request",
                 num_msgs_recved_for_get_request=self.num_msgs_recved_for_get_request
             )
-            self.adversary.client_completed_get_request(
-                num_msgs_recved_for_get_request=self.num_msgs_recved_for_get_request
-            )
+
+            if self.adversary:
+                self.adversary.client_completed_get_request(
+                    num_msgs_recved_for_get_request=self.num_msgs_recved_for_get_request
+                )
+
+            self.token_store.put(1)
 
     def send_messages(self):
         slog(DEBUG, self.env, self, "started")

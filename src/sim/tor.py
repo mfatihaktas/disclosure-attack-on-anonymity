@@ -47,12 +47,12 @@ class TorSystem():
                 env=self.env,
                 _id=f"s{i}",
             )
+            server.next_hop = self.network
             self.server_list.append(server)
 
             self.network.register_server(server)
 
         # Clients
-        self.client_list = []
         for i in range(num_clients):
             client = client_module.Client(
                 env=self.env,
@@ -65,7 +65,6 @@ class TorSystem():
                 num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             )
             client.next_hop = self.network
-            self.client_list.append(client)
 
             self.network.register_client(client)
 

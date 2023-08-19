@@ -2,12 +2,13 @@ import heapq
 
 import simpy
 
-from src.debug_utils import *
 from src.prob import random_variable
 from src.sim import client as client_module
 from src.sim import message
 from src.sim import node as node_module
 from src.sim import server as server_module
+
+from src.debug_utils import DEBUG, log, slog
 
 
 class Network(node_module.Node):
@@ -20,8 +21,9 @@ class Network(node_module.Node):
 
         self.msg_store = simpy.Store(env)
 
-        self.client_list = []
-        self.id_to_server_map = {}
+        self.id_to_node_map = {}
+        self.client_id_list = []
+        self.server_id_list = []
 
     def __repr__(self):
         # return (
@@ -29,22 +31,27 @@ class Network(node_module.Node):
         #     f"{super().__repr__()} \n"
         #     ")"
         # )
-
         return f"Network(id= {self._id})"
 
     def register_client(self, client: client_module.Client):
-        self.client_list.append(client)
+        self.id_to_node_map[client._id] = client
+        self.client_id_list.append(client._id)
         log(DEBUG, "Done", client=client)
 
     def register_server(self, server: server_module.Server):
-        self.id_to_server_map[server._id] = server
+        self.id_to_node_map[server._id] = server
+        self.server_id_list.append(server._id)
         log(DEBUG, "Done", server=server)
 
-    def get_client_list(self):
-        return self.client_list
+    def get_client_list(self) -> list[client_module.Client]:
+        return [
+            self.id_to_node_map[client_id] for client_id in self.client_id_list
+        ]
 
-    def get_server_list(self):
-        return list(self.id_to_server_map.values())
+    def get_server_list(self) -> list[server_module.Server]:
+        return [
+            self.id_to_node_map[server_id] for server_id in self.server_id_list
+        ]
 
     def put(self, msg: message.Message):
         slog(DEBUG, self.env, self, "recved", msg=msg)
@@ -73,7 +80,7 @@ class Network_wZeroDelay(Network):
         while True:
             msg = yield self.msg_store.get()
 
-            dst_node = self.id_to_server_map[msg.dst_id]
+            dst_node = self.id_to_node_map[msg.dst_id]
             slog(DEBUG, self.env, self, "forwarding", msg=msg, dst_node=dst_node)
             dst_node.put(msg)
 
@@ -137,7 +144,7 @@ class Network_wDelayAssignedPerMessage(Network):
             if self.env.now - min_forward_time >= 0:
                 _, msg = heapq.heappop(self.forward_time_and_msg_heapq)
 
-                dst_node = self.id_to_server_map[msg.dst_id]
+                dst_node = self.id_to_node_map[msg.dst_id]
                 slog(DEBUG, self.env, self, "forwarding", msg=msg, dst_node=dst_node)
                 dst_node.put(msg)
 

@@ -3,7 +3,7 @@ import simpy
 from src.attack import adversary as adversary_module
 from src.sim import message, node
 
-from src.debug_utils import *
+from src.debug_utils import DEBUG, slog
 
 
 class Server(node.Node):
@@ -13,6 +13,8 @@ class Server(node.Node):
         _id: str,
     ):
         super().__init__(env=env, _id=_id)
+
+        self.next_hop = None
 
         self.num_msgs_sent = 0
         self.adversary: adversary_module.Adversary = None
@@ -52,12 +54,12 @@ class Server(node.Node):
 
             if msg._type == message.MessageType.GET:
                 for _ in range(msg.num_msgs_to_recv):
-                    msg_ = message.Message(
+                    msg_ = message.DataMessage(
                         _id=self.num_msgs_sent,
-                        _type=message.MessageType.DATA,
                         src_id=msg.dst_id,
                         dst_id=msg.src_id,
                     )
+                    self.next_hop.put(msg_)
                     slog(
                         DEBUG, self.env, self,
                         "sent",
