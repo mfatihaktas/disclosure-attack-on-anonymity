@@ -9,7 +9,7 @@ from src.sim import client as client_module
 from src.sim import network as network_module
 from src.sim import server as server_module
 
-from src.debug_utils import check, DEBUG, log
+from src.debug_utils import check, DEBUG, INFO, log
 
 
 class TorSystem():
@@ -130,13 +130,15 @@ def sim_time_to_deanonymize_w_disclosure_attack(
         )
 
         tor.register_adversary(adversary=adversary)
-        tor.run()
 
-        return tor.get_attack_completion_time()
+        env.run(until=adversary.attack_completed_event)
+
+        return adversary.attack_completion_time
 
     time_to_deanonymize_list = []
     for _ in range(num_samples):
         time_to_deanonymize = sim()
+        log(INFO, "", time_to_deanonymize=time_to_deanonymize)
         time_to_deanonymize_list.append(time_to_deanonymize)
 
     return time_to_deanonymize_list

@@ -29,6 +29,9 @@ class DisclosureAttack(adversary_module.Adversary):
 
         self.attack_completed_event = self.env.event()
 
+        self.target_server_ids = None
+        self.attack_completion_time = None
+
     def __repr__(self):
         return f"DisclosureAttack(error_percent= {self.error_percent})"
 
@@ -124,6 +127,7 @@ class DisclosureAttack(adversary_module.Adversary):
                 "completed attack",
                 target_server_ids=self.target_server_ids
             )
+            self.attack_completion_time = self.env.now
             self.attack_completed_event.succeed()
 
     def server_sent_msg(self, msg: message.Message):

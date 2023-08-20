@@ -1,25 +1,26 @@
 import numpy
 
-from src.attack import intersection_attack
 from src.prob import random_variable
 from src.sim import tor as tor_module
 
-from src.debug_utils import *
-from src.plot_utils import *
+from src.debug_utils import log, INFO
+from src.plot_utils import NICE_BLUE, plot
 
 
 def test_plot_avg_time_to_deanonymize_vs_num_servers():
-    num_clients = 5  # 10
-    inter_msg_gen_time_rv = random_variable.Exponential(mu=1)
+    num_clients = 10
     network_delay_rv = random_variable.DiscreteUniform(min_value=1, max_value=5)
-    num_target_client = 1
+    idle_time_rv = random_variable.Exponential(mu=1)
+    num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
+    num_target_servers = 1
     num_samples = 5
 
     log(INFO, "Started",
         num_clients=num_clients,
-        inter_msg_gen_time_rv=inter_msg_gen_time_rv,
         network_delay_rv=network_delay_rv,
-        num_target_client=num_target_client,
+        idle_time_rv=idle_time_rv,
+        num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+        num_target_servers=num_target_servers,
         num_samples=num_samples,
     )
 
@@ -31,9 +32,10 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
         time_to_deanonymize_list = tor_module.sim_time_to_deanonymize_w_disclosure_attack(
             num_clients=num_clients,
             num_servers=num_servers,
-            inter_msg_gen_time_rv=inter_msg_gen_time_rv,
             network_delay_rv=network_delay_rv,
-            num_target_client=num_target_client,
+            idle_time_rv=idle_time_rv,
+            num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+            num_target_servers=num_target_servers,
             num_samples=num_samples,
         )
 
@@ -50,16 +52,17 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     # TODO: Add stdev with error margin bars.
 
     fontsize = 14
-    plot.xlabel(r"$N_s$", fontsize=fontsize)
-    plot.ylabel(r"$E[T_d]$", fontsize=fontsize)
+    plot.xlabel(r"$N_{\mathrm{server}}$", fontsize=fontsize)
+    plot.ylabel(r"$E[T_{\mathrm{deanon}}]$", fontsize=fontsize)
     title = \
-        r"$N_c = {}$, ".format(num_clients) + \
-        r"$X \sim {}$, ".format(inter_msg_gen_time_rv.to_latex()) + \
-        r"$D \sim {}$, ".format(network_delay_rv.to_latex()) + \
-        r"$N_t = {}$".format(num_target_client) + "\n" \
-        r"$N_{\mathbf{samples}} = $" + "${}$".format(num_samples)
-    plot.title(title, fontsize=fontsize) # , y=1.05
+        r"$N_{\mathrm{client}} =$" + fr"${num_clients}$, " + \
+        r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, " + \
+        r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, " + \
+        r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, " + \
+        r"$N_{\mathrm{target-server}} =$" + fr"${num_target_servers}$" + "\n" \
+        r"$N_{\mathbf{samples}} =$" + fr"${num_samples}$"
+    plot.title(title, fontsize=fontsize)  # , y=1.05
     plot.gcf().set_size_inches(6, 6)
-    plot.savefig(f"plots/plot_avg_time_to_deanonymize_vs_num_servers.png", bbox_inches="tight")
+    plot.savefig("plots/plot_avg_time_to_deanonymize_vs_num_servers.png", bbox_inches="tight")
     plot.gcf().clear()
     log(INFO, "Done.")
