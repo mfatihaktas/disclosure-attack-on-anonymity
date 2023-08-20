@@ -110,6 +110,13 @@ class DisclosureAttack(adversary_module.Adversary):
         weight_list = [w for w, _ in weight_and_server_id_list]
         for m in range(len(weight_and_server_id_list), 0, -1):
             target_weight = 1 / m
+            if not (
+                target_weight * (1 - self.error_percent)
+                <= weight_list[-1]
+                <= target_weight * (1 + self.error_percent)
+            ):
+                continue
+
             left_index = bisect.bisect_left(
                 weight_list,
                 target_weight * (1 - self.error_percent),
@@ -161,9 +168,10 @@ class DisclosureAttack(adversary_module.Adversary):
         self.target_server_ids = self.check_for_completion()
         if self.target_server_ids is not None:
             slog(
-                DEBUG, self.env, self,
+                INFO, self.env, self,
                 "completed attack",
-                target_server_ids=self.target_server_ids
+                target_server_ids=self.target_server_ids,
+                server_id_to_weight_map=self.server_id_to_weight_map,
             )
             self.attack_completion_time = self.env.now
             self.attack_completed_event.succeed()
