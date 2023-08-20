@@ -48,18 +48,24 @@ class DisclosureAttack(adversary_module.Adversary):
             sample_candidate_set=sample_candidate_set,
         )
 
-        for server_id in sample_candidate_set:
-            cur_weight = self.server_id_to_weight_map[server_id]
+        for server_id in (
+            set(self.server_id_to_weight_map.keys())
+            | sample_candidate_set
+        ):
+            weight = self.server_id_to_weight_map[server_id]
             self.server_id_to_weight_map[server_id] = (
-                (cur_weight * self.num_sample_sets_collected + 1)
+                (
+                    weight * self.num_sample_sets_collected
+                    + int(server_id in sample_candidate_set)
+                )
                 / (self.num_sample_sets_collected + 1)
             )
 
         self.num_sample_sets_collected += 1
-        log(INFO, "updated",
-            num_sample_sets_collected=self.num_sample_sets_collected,
-            sample_candidate_set=sample_candidate_set,
-        )
+        # log(INFO, "updated",
+        #     num_sample_sets_collected=self.num_sample_sets_collected,
+        #     sample_candidate_set=sample_candidate_set,
+        # )
 
     def _check_for_completion(self) -> list[str] | None:
         if self.num_sample_sets_collected < 10:
@@ -98,23 +104,22 @@ class DisclosureAttack(adversary_module.Adversary):
                 (weight, server_id)
                 for server_id, weight in self.server_id_to_weight_map.items()
             ],
-            reverse=True,
         )
-        log(INFO, "", weight_and_server_id_list=weight_and_server_id_list)
+        # log(INFO, "", weight_and_server_id_list=weight_and_server_id_list)
 
-        for m in range(1, len(weight_and_server_id_list) + 1):
+        weight_list = [w for w, _ in weight_and_server_id_list]
+        for m in range(len(weight_and_server_id_list), 0, -1):
             target_weight = 1 / m
-            right_index = bisect.bisect_right(
-                weight_and_server_id_list,
-                (
-                    target_weight * (1 - self.error_percent),
-                    "s0"
-                )
+            left_index = bisect.bisect_left(
+                weight_list,
+                target_weight * (1 - self.error_percent),
             )
-            if right_index == m:
+            # log(INFO, "", m=m, left_index=left_index)
+
+            if len(weight_and_server_id_list) - left_index == m:
                 return [
                     server_id
-                    for (_, server_id) in weight_and_server_id_list[:m]
+                    for (_, server_id) in weight_and_server_id_list[-m:]
                 ]
 
         return None
