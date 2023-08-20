@@ -93,6 +93,9 @@ class TorSystem():
     def get_attack_completion_time(self) -> float:
         return self.adversary.attack_completion_time
 
+    def get_target_server_ids(self) -> list[str]:
+        return self.adversary.target_server_ids
+
     def run(self):
         log(DEBUG, "Started")
         self.env.run(until=self.adversary.attack_completed_event)
@@ -131,12 +134,18 @@ def sim_time_to_deanonymize_w_disclosure_attack(
         tor.register_adversary(adversary=adversary)
         tor.run()
 
-        return tor.get_attack_completion_time()
+        return (
+            tor.get_attack_completion_time(),
+            tor.get_target_server_ids()
+        )
 
     time_to_deanonymize_list = []
     for _ in range(num_samples):
-        time_to_deanonymize = sim()
-        log(INFO, "", time_to_deanonymize=time_to_deanonymize)
+        time_to_deanonymize, target_server_ids = sim()
+        log(INFO, "",
+            time_to_deanonymize=time_to_deanonymize,
+            target_server_ids=target_server_ids
+        )
         time_to_deanonymize_list.append(time_to_deanonymize)
 
     return time_to_deanonymize_list

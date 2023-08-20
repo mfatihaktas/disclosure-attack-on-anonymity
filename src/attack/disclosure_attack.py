@@ -61,7 +61,7 @@ class DisclosureAttack(adversary_module.Adversary):
             sample_candidate_set=sample_candidate_set,
         )
 
-    def check_for_completion(self) -> list[str] | None:
+    def _check_for_completion(self) -> list[str] | None:
         if self.num_sample_sets_collected < 10:
             return None
 
@@ -82,6 +82,36 @@ class DisclosureAttack(adversary_module.Adversary):
                 ) / target_weight <= self.error_percent
                 for i in range(m)
             ):
+                return [
+                    server_id
+                    for (_, server_id) in weight_and_server_id_list[:m]
+                ]
+
+        return None
+
+    def check_for_completion(self) -> list[str] | None:
+        if self.num_sample_sets_collected < 10:
+            return None
+
+        weight_and_server_id_list = sorted(
+            [
+                (weight, server_id)
+                for server_id, weight in self.server_id_to_weight_map.items()
+            ],
+            reverse=True,
+        )
+        log(INFO, "", weight_and_server_id_list=weight_and_server_id_list)
+
+        for m in range(1, len(weight_and_server_id_list) + 1):
+            target_weight = 1 / m
+            right_index = bisect.bisect_right(
+                weight_and_server_id_list,
+                (
+                    target_weight * (1 - self.error_percent),
+                    "s0"
+                )
+            )
+            if right_index == m:
                 return [
                     server_id
                     for (_, server_id) in weight_and_server_id_list[:m]
