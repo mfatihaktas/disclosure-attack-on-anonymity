@@ -5,7 +5,7 @@ import simpy
 from src.attack import adversary as adversary_module
 from src.sim import message
 
-from src.debug_utils import check, log, DEBUG, slog
+from src.debug_utils import check, log, DEBUG, INFO, slog
 
 
 class DisclosureAttack(adversary_module.Adversary):
@@ -56,7 +56,10 @@ class DisclosureAttack(adversary_module.Adversary):
             )
 
         self.num_sample_sets_collected += 1
-        log(DEBUG, "updated", num_sample_sets_collected=self.num_sample_sets_collected)
+        log(INFO, "updated",
+            num_sample_sets_collected=self.num_sample_sets_collected,
+            sample_candidate_set=sample_candidate_set,
+        )
 
     def check_for_completion(self) -> list[str] | None:
         if self.num_sample_sets_collected < 10:

@@ -10,9 +10,11 @@ from src.plot_utils import NICE_BLUE, plot
 def test_plot_avg_time_to_deanonymize_vs_num_servers():
     num_clients = 10
     network_delay_rv = random_variable.DiscreteUniform(min_value=1, max_value=5)
-    idle_time_rv = random_variable.Exponential(mu=1)
+    # idle_time_rv = random_variable.Exponential(mu=1)
+    idle_time_rv = random_variable.Uniform(min_value=3, max_value=7)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
     num_target_servers = 1
+    error_percent = 0.05
     num_samples = 5
 
     log(INFO, "Started",
@@ -21,12 +23,13 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
         idle_time_rv=idle_time_rv,
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         num_target_servers=num_target_servers,
+        error_percent=error_percent,
         num_samples=num_samples,
     )
 
     num_servers_list = []
     E_time_to_deanonymize_list = []
-    for num_servers in range(1, 7):
+    for num_servers in range(2, 7):
         log(INFO, f">> num_servers= {num_servers}")
 
         time_to_deanonymize_list = tor_module.sim_time_to_deanonymize_w_disclosure_attack(
@@ -36,6 +39,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
             idle_time_rv=idle_time_rv,
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             num_target_servers=num_target_servers,
+            error_percent=error_percent,
             num_samples=num_samples,
         )
 

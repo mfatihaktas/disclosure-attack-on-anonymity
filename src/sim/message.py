@@ -2,9 +2,9 @@ import enum
 
 
 class MessageType(enum.Enum):
-    DATA="DATA"
-    GET="GET"
-    POST="POST"
+    DATA = "DATA"
+    GET = "GET"
+    POST = "POST"
 
 
 class Message:
@@ -30,6 +30,9 @@ class Message:
             ")"
         )
         # return f"Message(id= {self._id})"
+
+    def __lt__(self, other):
+        return self._id < other._id
 
 
 class GetRequest(Message):

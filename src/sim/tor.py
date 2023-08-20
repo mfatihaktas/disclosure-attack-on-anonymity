@@ -95,9 +95,7 @@ class TorSystem():
 
     def run(self):
         log(DEBUG, "Started")
-
-        self.env.run(until=self.adversary.attack_process)
-
+        self.env.run(until=self.adversary.attack_completed_event)
         log(DEBUG, "Done")
 
 
@@ -109,9 +107,16 @@ def sim_time_to_deanonymize_w_disclosure_attack(
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     num_target_servers: int,
     num_samples: int,
+    error_percent: float,
 ) -> list[float]:
     def sim() -> float:
         env = simpy.Environment()
+
+        adversary = disclosure_attack.DisclosureAttack(
+            env=env,
+            max_msg_delivery_time=network_delay_rv.max_value,
+            error_percent=error_percent,
+        )
 
         tor = TorSystem(
             env=env,
@@ -123,17 +128,10 @@ def sim_time_to_deanonymize_w_disclosure_attack(
             num_target_servers=num_target_servers,
         )
 
-        adversary = disclosure_attack.DisclosureAttack(
-            env=env,
-            max_msg_delivery_time=network_delay_rv.max_value,
-            error_percent=0.1,
-        )
-
         tor.register_adversary(adversary=adversary)
+        tor.run()
 
-        env.run(until=adversary.attack_completed_event)
-
-        return adversary.attack_completion_time
+        return tor.get_attack_completion_time()
 
     time_to_deanonymize_list = []
     for _ in range(num_samples):
