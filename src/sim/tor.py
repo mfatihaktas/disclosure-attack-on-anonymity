@@ -21,6 +21,7 @@ class TorSystem():
         num_servers: int,
         network_delay_rv: random_variable.RandomVariable,
         idle_time_rv: random_variable.RandomVariable,
+        idle_time_rv_for_target_client: random_variable.RandomVariable,
         num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
         num_target_servers: int,
     ):
@@ -31,6 +32,7 @@ class TorSystem():
         self.num_servers = num_servers
         self.network_delay_rv = network_delay_rv
         self.idle_time_rv = idle_time_rv
+        self.idle_time_rv_for_target_client = idle_time_rv_for_target_client
         self.num_msgs_to_recv_for_get_request_rv = num_msgs_to_recv_for_get_request_rv
         self.num_target_servers = num_target_servers
 
@@ -56,23 +58,27 @@ class TorSystem():
         # Clients
         for i in range(-1, num_clients):
             if i == -1:  # Target client
-                server_id_list = [
-                    self.server_list[(i + 1 + j) % num_servers]._id
-                    for j in range(num_target_servers)
-                ]
+                client = client_module.Client(
+                    env=self.env,
+                    _id=f"c-target",
+                    server_id_list=[
+                        self.server_list[(i + 1 + j) % num_servers]._id
+                        for j in range(num_target_servers)
+                    ],
+                    idle_time_rv=idle_time_rv_for_target_client,
+                    num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+                )
 
             else:
-                server_id_list = [self.server_list[i % num_servers]._id]
+                client = client_module.Client(
+                    env=self.env,
+                    _id=f"c{i}",
+                    server_id_list=[self.server_list[i % num_servers]._id],
+                    idle_time_rv=idle_time_rv_for_target_client,
+                    num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+                )
 
-            client = client_module.Client(
-                env=self.env,
-                _id=f"c{i}",
-                server_id_list=server_id_list,
-                idle_time_rv=idle_time_rv,
-                num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
-            )
             client.next_hop = self.network
-
             self.network.register_client(client)
 
     def register_adversary(self, adversary: adversary_module.Adversary):
@@ -126,6 +132,7 @@ def sim_w_disclosure_attack(
     num_servers: int,
     network_delay_rv: random_variable.RandomVariable,
     idle_time_rv: random_variable.RandomVariable,
+    idle_time_rv_for_target_client: random_variable.RandomVariable,
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     num_target_servers: int,
     num_samples: int,
@@ -147,6 +154,7 @@ def sim_w_disclosure_attack(
             num_servers=num_servers,
             network_delay_rv=network_delay_rv,
             idle_time_rv=idle_time_rv,
+            idle_time_rv_for_target_client=idle_time_rv_for_target_client,
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             num_target_servers=num_target_servers,
         )
