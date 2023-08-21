@@ -253,7 +253,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 )
 
             slog(
-                INFO, self.env, self,
+                DEBUG, self.env, self,
                 "baseline inspection round",
                 num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
                 sample_candidate_set=sample_candidate_set,
@@ -278,7 +278,10 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 for server_id, weight in self.server_id_to_weight_map.items()
             ],
         )
-        log(INFO, "", weight_and_server_id_list=weight_and_server_id_list)
+        log(INFO, "",
+            server_id_to_weight_map_for_baseline_inspection=self.server_id_to_weight_map_for_baseline_inspection,
+            weight_and_server_id_list=weight_and_server_id_list,
+        )
 
         weight_list = [w for w, _ in weight_and_server_id_list]
         for m in range(len(weight_and_server_id_list), 0, -1):
