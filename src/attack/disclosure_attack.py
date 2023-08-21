@@ -68,7 +68,7 @@ class DisclosureAttack(adversary_module.Adversary):
         # )
 
     def _check_for_completion(self) -> list[str] | None:
-        if self.num_sample_sets_collected < 10:
+        if self.num_sample_sets_collected < 5:
             return None
 
         weight_and_server_id_list = sorted(
@@ -95,7 +95,7 @@ class DisclosureAttack(adversary_module.Adversary):
 
         return None
 
-    def check_for_completion(self) -> list[str] | None:
+    def check_for_completion(self) -> set[str] | None:
         if self.num_sample_sets_collected < 10:
             return None
 
@@ -124,10 +124,10 @@ class DisclosureAttack(adversary_module.Adversary):
             # log(INFO, "", m=m, left_index=left_index)
 
             if len(weight_and_server_id_list) - left_index == m:
-                return [
+                return set(
                     server_id
                     for (_, server_id) in weight_and_server_id_list[-m:]
-                ]
+                )
 
         return None
 

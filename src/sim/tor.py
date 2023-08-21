@@ -10,7 +10,7 @@ from src.sim import client as client_module
 from src.sim import network as network_module
 from src.sim import server as server_module
 
-from src.debug_utils import check, DEBUG, INFO, log
+from src.debug_utils import check, DEBUG, INFO, log, WARNING
 
 
 class TorSystem():
@@ -55,14 +55,19 @@ class TorSystem():
 
         # Clients
         for i in range(num_clients):
+            if i == 0:  # Target client
+                server_id_list = [
+                    self.server_list[(i + j) % num_servers]._id
+                    for j in range(num_target_servers)
+                ]
+
+            else:
+                server_id_list = [self.server_list[i % num_servers]._id]
+
             client = client_module.Client(
                 env=self.env,
                 _id=f"c{i}",
-                server_id_list=[self.server_list[i % num_servers]._id],
-                # server_id_list=[
-                #     self.server_list[(i + j) % num_servers]._id
-                #     for j in range(num_target_servers)
-                # ],
+                server_id_list=server_id_list,
                 idle_time_rv=idle_time_rv,
                 num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             )
@@ -98,7 +103,7 @@ class TorSystem():
     def get_num_rounds(self) -> int:
         return self.adversary.num_sample_sets_collected
 
-    def get_target_server_ids(self) -> list[str]:
+    def get_target_server_ids(self) -> set[str]:
         return self.adversary.target_server_ids
 
     def run(self):
@@ -155,6 +160,7 @@ def sim_w_disclosure_attack(
     true_target_server_ids = set(
         f"s{server_id}" for server_id in range(num_target_servers)
     )
+    # log(WARNING, "", true_target_server_ids=true_target_server_ids)
 
     time_to_deanonymize_list = []
     num_rounds_list = []

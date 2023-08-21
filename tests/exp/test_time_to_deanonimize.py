@@ -10,7 +10,7 @@ from src.plot_utils import NICE_BLUE, plot
 def test_plot_avg_time_to_deanonymize_vs_num_servers():
     network_delay_rv = random_variable.Uniform(min_value=1, max_value=5)
     # idle_time_rv = random_variable.Exponential(mu=1)
-    idle_time_rv = random_variable.Uniform(min_value=1, max_value=20)
+    idle_time_rv = random_variable.Uniform(min_value=0, max_value=1)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
     num_target_servers = 2
     error_percent = 0.2
@@ -31,7 +31,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     std_time_to_deanonymize_list = []
     E_num_rounds_list = []
     std_num_rounds_list = []
-    for num_servers in range(2, 7):
+    for num_servers in range(2, 6):
         log(INFO, f">> num_servers= {num_servers}")
         num_clients = num_servers
 
