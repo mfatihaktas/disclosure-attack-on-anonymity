@@ -78,6 +78,8 @@ class TorSystem():
     def register_adversary(self, adversary: adversary_module.Adversary):
         self.adversary = adversary
 
+        client_list = self.network.get_client_list()
+        log(WARNING, "", client_list=client_list)
         self.network.get_client_list()[0].adversary = self.adversary
 
         for server in self.network.get_server_list():

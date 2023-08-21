@@ -35,15 +35,15 @@ class Client(node.Node):
         self.num_msgs_recved_for_get_request = 0
 
     def __repr__(self):
-        # return (
-        #     "Client( \n"
-        #     f"{super().__repr__()} \n"
-        #     f"\t server_id_list= {self.server_id_list} \n"
-        #     f"\t idle_time_rv= {self.idle_time_rv} \n"
-        #     ")"
-        # )
+        return (
+            "Client( \n"
+            f"{super().__repr__()} \n"
+            f"\t server_id_list= {self.server_id_list} \n"
+            f"\t idle_time_rv= {self.idle_time_rv} \n"
+            ")"
+        )
 
-        return f"Client(id= {self._id})"
+        # return f"Client(id= {self._id})"
 
     def put(self, msg: message.Message):
         slog(DEBUG, self.env, self, "recved", msg=msg)

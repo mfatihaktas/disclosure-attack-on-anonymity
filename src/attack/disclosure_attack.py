@@ -68,7 +68,7 @@ class DisclosureAttack(adversary_module.Adversary):
         # )
 
     def _check_for_completion(self) -> list[str] | None:
-        if self.num_sample_sets_collected < 5:
+        if self.num_sample_sets_collected < 10:
             return None
 
         weight_and_server_id_list = sorted(
@@ -149,7 +149,8 @@ class DisclosureAttack(adversary_module.Adversary):
                 continue
 
             first_index_smaller = bisect.bisect_left(time_epochs_msg_sent, min_time_epoch)
-            log(DEBUG, "",
+            log(
+                DEBUG, "",
                 server_id=server_id,
                 min_time_epoch=min_time_epoch,
                 first_index_smaller=first_index_smaller,
