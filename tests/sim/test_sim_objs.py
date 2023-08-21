@@ -85,3 +85,18 @@ def test_DisclosureAttack(
     tor_system.register_adversary(adversary=adversary)
 
     env.run(until=adversary.attack_completed_event)
+
+
+def test_DisclosureAttack_wBaselineInspection(
+    tor_system: tor_module.TorSystem,
+):
+    env = tor_system.env
+    adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
+        env=env,
+        max_msg_delivery_time=tor_system.network_delay_rv.max_value,
+        error_percent=0.1,
+    )
+
+    tor_system.register_adversary(adversary=adversary)
+
+    env.run(until=adversary.attack_completed_event)
