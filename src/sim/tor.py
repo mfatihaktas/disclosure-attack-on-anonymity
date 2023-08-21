@@ -1,3 +1,4 @@
+import dataclasses
 import simpy
 
 from src.attack import (
@@ -92,7 +93,10 @@ class TorSystem():
         )
 
     def get_attack_completion_time(self) -> float:
-        return self.adversary.attack_completion_time
+        return self.adversary.time_to_complete_attack
+
+    def get_num_rounds(self) -> int:
+        return self.adversary.num_sample_sets_collected
 
     def get_target_server_ids(self) -> list[str]:
         return self.adversary.target_server_ids
@@ -103,7 +107,14 @@ class TorSystem():
         log(DEBUG, "Done")
 
 
-def sim_time_to_deanonymize_w_disclosure_attack(
+@dataclasses.dataclass
+class DisclosureAttackResult:
+    time_to_deanonymize_list: list[float]
+    num_rounds_list: list[int]
+    target_server_accuracy: float
+
+
+def sim_w_disclosure_attack(
     num_clients: int,
     num_servers: int,
     network_delay_rv: random_variable.RandomVariable,
@@ -112,8 +123,8 @@ def sim_time_to_deanonymize_w_disclosure_attack(
     num_target_servers: int,
     num_samples: int,
     error_percent: float,
-) -> list[float]:
-    def sim() -> float:
+) -> DisclosureAttackResult:
+    def sim():
         env = simpy.Environment()
 
         adversary = disclosure_attack.DisclosureAttack(
@@ -136,17 +147,34 @@ def sim_time_to_deanonymize_w_disclosure_attack(
         tor.run()
 
         return (
+            tor.get_target_server_ids(),
             tor.get_attack_completion_time(),
-            tor.get_target_server_ids()
+            tor.get_num_rounds()
         )
+
+    true_target_server_ids = set(
+        f"s{server_id}" for server_id in range(num_target_servers)
+    )
 
     time_to_deanonymize_list = []
+    num_rounds_list = []
+    num_correct_target_server_ids = 0
     for _ in range(num_samples):
-        time_to_deanonymize, target_server_ids = sim()
-        log(INFO, "",
+        target_server_ids, time_to_deanonymize, num_rounds = sim()
+        log(
+            INFO, "",
+            target_server_ids=target_server_ids,
             time_to_deanonymize=time_to_deanonymize,
-            target_server_ids=target_server_ids
+            num_rounds=num_rounds,
         )
-        time_to_deanonymize_list.append(time_to_deanonymize)
 
-    return time_to_deanonymize_list
+        time_to_deanonymize_list.append(time_to_deanonymize)
+        num_rounds_list.append(num_rounds)
+
+        num_correct_target_server_ids += int(true_target_server_ids == target_server_ids)
+
+    return DisclosureAttackResult(
+        time_to_deanonymize_list=time_to_deanonymize_list,
+        num_rounds_list=num_rounds_list,
+        target_server_accuracy=num_correct_target_server_ids / num_samples
+    )

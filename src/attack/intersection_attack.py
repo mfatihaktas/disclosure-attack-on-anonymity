@@ -69,7 +69,7 @@ class Adversary_wIntersectionAttack(adversary_module.Adversary):
         self.attack_window_store = simpy.Store(env)
         self.interrupt_attack = None
         self.attack_process = env.process(self.run_attack())
-        self.attack_completion_time = None
+        self.time_to_complete_attack = None
 
     def __repr__(self):
         return f"Adversary_wIntersectionAttack(max_msg_delivery_time= {self.max_msg_delivery_time})"
@@ -150,5 +150,5 @@ class Adversary_wIntersectionAttack(adversary_module.Adversary):
                 slog(DEBUG, self.env, self, "Wait interrupted by new attack window")
                 self.attack_window_store.put(attack_window)
 
-        self.attack_completion_time = self.env.now - attack_start_time
-        slog(DEBUG, self.env, self, "Done", attack_completion_time=self.attack_completion_time)
+        self.time_to_complete_attack = self.env.now - attack_start_time
+        slog(DEBUG, self.env, self, "Done", attack_completion_time=self.time_to_complete_attack)
