@@ -235,13 +235,9 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
             sample_candidate_set = self.get_sample_candidate_set(
                 num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
             )
-            slog(
-                DEBUG, self.env, self,
-                "baseline inspection round",
-                num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
-                sample_candidate_set=sample_candidate_set,
-                num_sample_sets_collected=num_sample_sets_collected,
-            )
+            if not sample_candidate_set:
+                slog(DEBUG, self.env, self, "skipping empty sample_candidate_set")
+                continue
 
             for server_id in (
                 set(self.server_id_to_weight_map_for_baseline_inspection.keys())
@@ -256,6 +252,14 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                     / (num_sample_sets_collected + 1)
                 )
 
+            slog(
+                INFO, self.env, self,
+                "baseline inspection round",
+                num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+                sample_candidate_set=sample_candidate_set,
+                num_sample_sets_collected=num_sample_sets_collected,
+                server_id_to_weight_map_for_baseline_inspection=self.server_id_to_weight_map_for_baseline_inspection,
+            )
             num_sample_sets_collected += 1
 
     def check_if_attack_completed(self) -> set[str] | None:

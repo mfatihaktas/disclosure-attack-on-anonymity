@@ -54,10 +54,10 @@ class TorSystem():
             self.network.register_server(server)
 
         # Clients
-        for i in range(num_clients):
-            if i == 0:  # Target client
+        for i in range(-1, num_clients):
+            if i == -1:  # Target client
                 server_id_list = [
-                    self.server_list[(i + j) % num_servers]._id
+                    self.server_list[(i + 1 + j) % num_servers]._id
                     for j in range(num_target_servers)
                 ]
 
