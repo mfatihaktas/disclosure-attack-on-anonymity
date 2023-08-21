@@ -57,10 +57,11 @@ class TorSystem():
             client = client_module.Client(
                 env=self.env,
                 _id=f"c{i}",
-                server_id_list=[
-                    self.server_list[(i + j) % num_servers]._id
-                    for j in range(num_target_servers)
-                ],
+                server_id_list=[self.server_list[i % num_servers]._id],
+                # server_id_list=[
+                #     self.server_list[(i + j) % num_servers]._id
+                #     for j in range(num_target_servers)
+                # ],
                 idle_time_rv=idle_time_rv,
                 num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             )
