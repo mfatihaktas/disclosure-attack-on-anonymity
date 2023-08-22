@@ -34,6 +34,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     E_num_rounds_list = []
     std_num_rounds_list = []
     for num_servers in range(4, 5):
+    # for num_servers in range(2, 3):
         log(INFO, f">> num_servers= {num_servers}")
         num_clients = num_servers
 

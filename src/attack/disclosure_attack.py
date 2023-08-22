@@ -1,6 +1,8 @@
 import bisect
 import collections
+import numpy
 import simpy
+import sklearn.cluster
 
 from src.attack import adversary as adversary_module
 from src.prob import random_variable
@@ -294,10 +296,42 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         )
 
         if self.num_rounds_stationary == 20:
-            return set(
-                server_id
+            # return set(
+            #     server_id
+            #     for server_id, avg_weight_diff in self.server_id_avg_weight_diff_map.items()
+            #     if avg_weight_diff > 0.04
+            # )
+
+            # Cluster the weight diffs
+            data = [
+                [server_id, avg_weight_diff]
                 for server_id, avg_weight_diff in self.server_id_avg_weight_diff_map.items()
-                if avg_weight_diff > 0.04
+            ]
+            array = numpy.array([[row[1]] for row in data])
+            centroids, labels, intertia = sklearn.cluster.k_means(array, 2)
+            log(
+                INFO, "",
+                centroids=centroids,
+                labels=labels,
+                intertia=intertia,
+            )
+
+            # Find `label_for_target_servers`
+            centroid_and_label_list_sorted = sorted(
+                [
+                    (centroids[label].item(), label)
+                    for label in range(2)
+                ]
+            )
+            log(INFO, "", centroid_and_label_list_sorted=centroid_and_label_list_sorted)
+
+            label_for_target_servers = centroid_and_label_list_sorted[1][1]
+
+            # Return the set of target server ids
+            return set(
+                data[i][0]
+                for i in range(len(data))
+                if labels[i] == label_for_target_servers
             )
 
         return None
