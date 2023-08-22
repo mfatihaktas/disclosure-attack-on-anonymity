@@ -217,13 +217,15 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         )
 
         self.server_id_to_weight_map_for_baseline_inspection = collections.defaultdict(float)
+        self.server_id_avg_weight_diff_map = collections.defaultdict(float)
+        self.num_rounds_stationary = 0
         self.baseline_inspection_process = env.process(self.baseline_inspection())
 
     def __repr__(self):
         return f"DisclosureAttack_wBaselineInspection(error_percent= {self.error_percent})"
 
     def baseline_inspection(self):
-        interval_rv = random_variable.Exponential(mu=1)
+        interval_rv = random_variable.Exponential(mu=0.5)
 
         num_msgs_recved_for_get_request = 1
         num_sample_sets_collected = 0
@@ -266,43 +268,36 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         if self.num_sample_sets_collected < 10:
             return None
 
-        weight_and_server_id_list = sorted(
-            [
-                (
-                    max(
-                        weight - self.server_id_to_weight_map_for_baseline_inspection[server_id],
-                        0
-                    ),
-                    server_id
-                )
-                for server_id, weight in self.server_id_to_weight_map.items()
-            ],
-        )
-        log(INFO, "",
-            server_id_to_weight_map_for_baseline_inspection=self.server_id_to_weight_map_for_baseline_inspection,
-            weight_and_server_id_list=weight_and_server_id_list,
-        )
-
-        weight_list = [w for w, _ in weight_and_server_id_list]
-        for m in range(len(weight_and_server_id_list), 0, -1):
-            target_weight = 1 / m
-            if not (
-                target_weight * (1 - self.error_percent)
-                <= weight_list[-1]
-                <= target_weight * (1 + self.error_percent)
-            ):
-                continue
-
-            left_index = bisect.bisect_left(
-                weight_list,
-                target_weight * (1 - self.error_percent),
+        for server_id in (
+            set(self.server_id_to_weight_map.keys())
+            | set(self.server_id_to_weight_map_for_baseline_inspection.keys())
+        ):
+            avg_weight_diff = self.server_id_avg_weight_diff_map[server_id]
+            weight_diff = (
+                self.server_id_to_weight_map[server_id]
+                - self.server_id_to_weight_map_for_baseline_inspection[server_id]
             )
-            # log(INFO, "", m=m, left_index=left_index)
 
-            if len(weight_and_server_id_list) - left_index == m:
-                return set(
-                    server_id
-                    for (_, server_id) in weight_and_server_id_list[-m:]
-                )
+            diff = weight_diff - avg_weight_diff
+            self.server_id_avg_weight_diff_map[server_id] += 0.9 * diff
+
+            if abs(diff) > 0.005:
+                self.num_rounds_stationary = 0
+
+        self.num_rounds_stationary += 1
+        log(
+            INFO, "",
+            server_id_to_weight_map=self.server_id_to_weight_map,
+            server_id_to_weight_map_for_baseline_inspection=self.server_id_to_weight_map_for_baseline_inspection,
+            server_id_avg_weight_diff_map=self.server_id_avg_weight_diff_map,
+            num_rounds_stationary=self.num_rounds_stationary,
+        )
+
+        if self.num_rounds_stationary == 20:
+            return set(
+                server_id
+                for server_id, avg_weight_diff in self.server_id_avg_weight_diff_map.items()
+                if avg_weight_diff > 0.04
+            )
 
         return None

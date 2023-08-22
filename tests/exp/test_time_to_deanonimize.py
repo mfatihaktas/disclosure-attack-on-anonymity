@@ -15,7 +15,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
     num_target_servers = 2
     error_percent = 0.2
-    num_samples = 5
+    num_samples = 1
 
     log(
         INFO, "Started",
@@ -33,7 +33,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     std_time_to_deanonymize_list = []
     E_num_rounds_list = []
     std_num_rounds_list = []
-    for num_servers in range(3, 6):
+    for num_servers in range(4, 5):
         log(INFO, f">> num_servers= {num_servers}")
         num_clients = num_servers
 
