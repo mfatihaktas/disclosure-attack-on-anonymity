@@ -296,24 +296,18 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         )
 
         if self.num_rounds_stationary == 20:
-            # return set(
-            #     server_id
-            #     for server_id, avg_weight_diff in self.server_id_avg_weight_diff_map.items()
-            #     if avg_weight_diff > 0.04
-            # )
-
             # Cluster the weight diffs
             data = [
                 [server_id, avg_weight_diff]
                 for server_id, avg_weight_diff in self.server_id_avg_weight_diff_map.items()
             ]
             array = numpy.array([[row[1]] for row in data])
-            centroids, labels, intertia = sklearn.cluster.k_means(array, 2)
+            centroids, labels, inertia = sklearn.cluster.k_means(array, 2)
             log(
-                INFO, "",
+                DEBUG, "",
                 centroids=centroids,
                 labels=labels,
-                intertia=intertia,
+                inertia=inertia,
             )
 
             # Find `label_for_target_servers`
