@@ -210,13 +210,14 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         self,
         env: simpy.Environment,
         max_msg_delivery_time: float,
-        error_percent: float,
+        diff_threshold: float,
     ):
         super().__init__(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
-            error_percent=error_percent,
+            error_percent=None,
         )
+        self.diff_threshold = diff_threshold
 
         self.server_id_to_weight_map_for_baseline_inspection = collections.defaultdict(float)
         self.server_id_avg_weight_diff_map = collections.defaultdict(float)
@@ -224,7 +225,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         self.baseline_inspection_process = env.process(self.baseline_inspection())
 
     def __repr__(self):
-        return f"DisclosureAttack_wBaselineInspection(error_percent= {self.error_percent})"
+        return f"DisclosureAttack_wBaselineInspection(diff_threshold= {self.diff_threshold})"
 
     def baseline_inspection(self):
         interval_rv = random_variable.Exponential(mu=0.5)
@@ -283,7 +284,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
             diff = weight_diff - avg_weight_diff
             self.server_id_avg_weight_diff_map[server_id] += 0.9 * diff
 
-            if abs(diff) > 0.005:
+            if abs(diff) > self.diff_threshold:
                 self.num_rounds_stationary = 0
 
         self.num_rounds_stationary += 1

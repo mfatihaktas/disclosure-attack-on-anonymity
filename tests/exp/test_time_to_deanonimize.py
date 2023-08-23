@@ -13,8 +13,8 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     idle_time_rv = random_variable.Uniform(min_value=0, max_value=1)
     idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
-    num_target_servers = 2
-    error_percent = 0.2
+    num_target_servers = 4
+    diff_threshold = 0.003
     num_samples = 1
 
     log(
@@ -24,7 +24,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
         idle_time_rv_for_target_client=idle_time_rv_for_target_client,
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         num_target_servers=num_target_servers,
-        error_percent=error_percent,
+        diff_threshold=diff_threshold,
         num_samples=num_samples,
     )
 
@@ -33,8 +33,9 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     std_time_to_deanonymize_list = []
     E_num_rounds_list = []
     std_num_rounds_list = []
-    for num_servers in range(4, 5):
+    # for num_servers in range(4, 5):
     # for num_servers in range(2, 3):
+    for num_servers in range(9, 10):
         log(INFO, f">> num_servers= {num_servers}")
         num_clients = num_servers
 
@@ -46,7 +47,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
             idle_time_rv_for_target_client=idle_time_rv_for_target_client,
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             num_target_servers=num_target_servers,
-            error_percent=error_percent,
+            diff_threshold=diff_threshold,
             num_samples=num_samples,
         )
 

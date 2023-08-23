@@ -94,7 +94,7 @@ def test_DisclosureAttack_wBaselineInspection(
     adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
         env=env,
         max_msg_delivery_time=tor_system.network_delay_rv.max_value,
-        error_percent=0.1,
+        diff_threshold=0.003,
     )
 
     tor_system.register_adversary(adversary=adversary)

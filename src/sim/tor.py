@@ -136,7 +136,7 @@ def sim_w_disclosure_attack(
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     num_target_servers: int,
     num_samples: int,
-    error_percent: float,
+    diff_threshold: float,
 ) -> DisclosureAttackResult:
     def sim():
         env = simpy.Environment()
@@ -145,7 +145,7 @@ def sim_w_disclosure_attack(
         adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
             env=env,
             max_msg_delivery_time=network_delay_rv.max_value,
-            error_percent=error_percent,
+            diff_threshold=diff_threshold,
         )
 
         tor = TorSystem(
