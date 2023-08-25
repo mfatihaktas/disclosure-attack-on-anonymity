@@ -4,6 +4,8 @@ import numpy
 import simpy
 import sklearn.cluster
 
+from typing import Optional
+
 from src.attack import adversary as adversary_module
 from src.prob import random_variable
 from src.sim import message
@@ -70,7 +72,7 @@ class DisclosureAttack(adversary_module.Adversary):
         #     sample_candidate_set=sample_candidate_set,
         # )
 
-    def _check_for_completion(self) -> list[str] | None:
+    def _check_for_completion(self) -> Optional[list[str]]:
         if self.num_sample_sets_collected < 10:
             return None
 
@@ -98,7 +100,7 @@ class DisclosureAttack(adversary_module.Adversary):
 
         return None
 
-    def check_if_attack_completed(self) -> set[str] | None:
+    def check_if_attack_completed(self) -> Optional[set[str]]:
         if self.num_sample_sets_collected < 10:
             return None
 
@@ -228,7 +230,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         return f"DisclosureAttack_wBaselineInspection(diff_threshold= {self.diff_threshold})"
 
     def baseline_inspection(self):
-        interval_rv = random_variable.Exponential(mu=0.5)
+        interval_rv = random_variable.Exponential(mu=1)
 
         num_msgs_recved_for_get_request = 1
         num_sample_sets_collected = 0
@@ -267,7 +269,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
             )
             num_sample_sets_collected += 1
 
-    def check_if_attack_completed(self) -> set[str] | None:
+    def check_if_attack_completed(self) -> Optional[set[str]]:
         if self.num_sample_sets_collected < 10:
             return None
 
