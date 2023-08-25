@@ -85,7 +85,7 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
         r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
         r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
         r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, " + "\n"
-        r"$N_{\mathrm{target-server}} =$" + fr"${num_target_servers}$, "
+        r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
         r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
     )
     plot.title(title, fontsize=fontsize)
@@ -109,9 +109,9 @@ if __name__ == "__main__":
     idle_time_rv = random_variable.Uniform(min_value=0, max_value=1)
     idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
-    num_target_servers = 4
+    num_target_servers = 2
     # num_servers_list = list(range(4, 10))
-    num_servers_list = list(range(4, 7))
+    num_servers_list = list(range(3, 20))
     diff_threshold = 0.003
     num_samples = 5
 

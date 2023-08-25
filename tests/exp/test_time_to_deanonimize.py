@@ -90,7 +90,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
         r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
         r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
         r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, " + "\n"
-        r"$N_{\mathrm{target-server}} =$" + fr"${num_target_servers}$, "
+        r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
         r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
     )
     plot.title(title, fontsize=fontsize)
