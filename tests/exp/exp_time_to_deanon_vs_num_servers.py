@@ -4,7 +4,7 @@ from src.prob import random_variable
 from src.sim import tor as tor_module
 
 from src.debug_utils import log, INFO
-from src.plot_utils import NICE_BLUE, plot
+from src.plot_utils import NICE_BLUE, NICE_RED, plot
 
 
 def plot_avg_time_to_deanonymize_vs_num_servers(
@@ -105,22 +105,36 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
         E_num_false_non_targets_list=E_num_false_non_targets_list,
         std_num_false_non_targets_list=std_num_false_non_targets_list,
     )
-    # plot.errorbar(num_servers_list, E_time_to_deanonymize_list, yerr=std_time_to_deanonymize_list, color=NICE_BLUE, marker="x")
-    plot.errorbar(num_servers_list, E_num_rounds_list, yerr=std_num_rounds_list, color=NICE_BLUE, marker="x")
 
+    # Plot
     fontsize = 14
-    plot.xlabel(r"$N_{\mathrm{server}}$", fontsize=fontsize)
+    fig, axs = plot.subplots(1, 2)
+
+    ax = axs[0]
+    plot.sca(ax)
+    plot.errorbar(num_servers_list, E_num_rounds_list, yerr=std_num_rounds_list, color=NICE_BLUE, marker="o")
+    plot.xlabel("Number of candidate servers", fontsize=fontsize)
     # plot.ylabel(r"$T_{\mathrm{deanon}}$", fontsize=fontsize)
     plot.ylabel("Number of rounds", fontsize=fontsize)
+
+    ax = axs[1]
+    plot.sca(ax)
+    plot.errorbar(num_servers_list, E_true_target_rate_list, yerr=std_true_target_rate_list, color=NICE_RED, marker="o")
+    plot.xlabel("Number of candidate servers", fontsize=fontsize)
+    plot.ylabel("True target rate", fontsize=fontsize)
+
     title = (
         r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
         r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
-        r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, " + "\n"
+        r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, "  # + "\n"
         r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
         r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
     )
-    plot.title(title, fontsize=fontsize)
-    plot.gcf().set_size_inches(6, 4)
+    plot.suptitle(title, fontsize=fontsize)
+
+    fig.set_size_inches(2 * 6, 4)
+    plot.subplots_adjust(hspace=0.25, wspace=0.25)
+
     plot_name = (
         "plot_time_to_deanon_vs_num_servers"
         f"_network_delay_rv_{network_delay_rv}"
@@ -130,6 +144,7 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
         f"_num_samples_{num_samples}"
     )
     plot.savefig(f"plots/{plot_name}.pdf", bbox_inches="tight")
+
     plot.gcf().clear()
     log(INFO, "Done")
 
@@ -141,6 +156,7 @@ if __name__ == "__main__":
     idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
     num_target_servers = 2
+    # num_servers_list = [3]
     # num_servers_list = list(range(3, 20))
     # num_servers_list = [3, 10, 20, 50, 100, 200]
     num_servers_list = [3, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000]

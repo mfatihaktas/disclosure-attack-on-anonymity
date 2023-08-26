@@ -133,7 +133,7 @@ class Uniform(RandomVariable):
         return f"Uniform({self.min_value}, {self.max_value})"
 
     def to_latex(self) -> str:
-        return "\mathrm{Uniform}" + f"[{self.min_value}, {self.max_value}]"
+        return "\mathrm{U}" + f"[{self.min_value}, {self.max_value}]"
 
     def sample(self) -> float:
         return self.dist.rvs()
@@ -154,7 +154,7 @@ class DiscreteUniform(RandomVariable):
         return f"DiscreteUniform({self.min_value}, {self.max_value})"
 
     def to_latex(self) -> str:
-        return "\mathrm{DUniform}" + f"[{self.min_value}, {self.max_value}]"
+        return "\mathrm{U}" + f"[{self.min_value}, {self.max_value}]"
 
     def mean(self) -> float:
         return (self.max_value + self.min_value) / 2

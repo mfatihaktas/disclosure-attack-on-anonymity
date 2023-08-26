@@ -34,7 +34,7 @@ class DisclosureAttack(adversary_module.Adversary):
 
         self.attack_completed_event = self.env.event()
 
-        self.target_server_ids = None
+        self.target_server_id_set = None
         self.time_to_complete_attack = None
 
     def __repr__(self):
@@ -186,12 +186,12 @@ class DisclosureAttack(adversary_module.Adversary):
         self.update(sample_candidate_set=sample_candidate_set)
 
         # Check if the attack is completed
-        self.target_server_ids = self.check_if_attack_completed()
-        if self.target_server_ids is not None:
+        self.target_server_id_set = self.check_if_attack_completed()
+        if self.target_server_id_set is not None:
             slog(
                 INFO, self.env, self,
                 "completed attack",
-                target_server_ids=self.target_server_ids,
+                target_server_id_set=self.target_server_id_set,
                 server_id_to_weight_map=self.server_id_to_weight_map,
             )
             self.time_to_complete_attack = self.env.now
