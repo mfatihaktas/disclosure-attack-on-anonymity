@@ -61,7 +61,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
             std_time_to_deanonymize=std_time_to_deanonymize,
             E_num_rounds=E_num_rounds,
             std_num_rounds=std_num_rounds,
-            target_server_accuracy=disclosure_attack_result.target_server_accuracy,
+            target_server_set_accuracy=disclosure_attack_result.target_server_set_accuracy,
         )
 
         num_servers_list.append(num_servers)

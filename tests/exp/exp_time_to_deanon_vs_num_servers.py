@@ -33,6 +33,10 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
     std_time_to_deanonymize_list = []
     E_num_rounds_list = []
     std_num_rounds_list = []
+    E_true_target_rate_list = []
+    std_true_target_rate_list = []
+    E_num_false_non_targets_list = []
+    std_num_false_non_targets_list = []
     for num_servers in num_servers_list:
         log(INFO, f">> num_servers= {num_servers}")
         num_clients = num_servers
@@ -51,21 +55,44 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
 
         E_time_to_deanonymize = numpy.mean(disclosure_attack_result.time_to_deanonymize_list)
         std_time_to_deanonymize = numpy.std(disclosure_attack_result.time_to_deanonymize_list)
+        E_time_to_deanonymize_list.append(E_time_to_deanonymize)
+        std_time_to_deanonymize_list.append(std_time_to_deanonymize)
+
         E_num_rounds = numpy.mean(disclosure_attack_result.num_rounds_list)
         std_num_rounds = numpy.std(disclosure_attack_result.num_rounds_list)
+        E_num_rounds_list.append(E_num_rounds)
+        std_num_rounds_list.append(std_num_rounds)
+
+        true_target_rate_list = [
+            classification_result.true_target_rate
+            for classification_result in disclosure_attack_result.classification_result_list
+        ]
+        E_true_target_rate = numpy.mean(true_target_rate_list)
+        std_true_target_rate = numpy.std(true_target_rate_list)
+        E_true_target_rate_list.append(E_true_target_rate)
+        std_true_target_rate_list.append(std_true_target_rate)
+
+        num_false_non_targets_list = [
+            classification_result.num_false_non_targets
+            for classification_result in disclosure_attack_result.classification_result_list
+        ]
+        E_num_false_non_targets = numpy.mean(num_false_non_targets_list)
+        std_num_false_non_targets = numpy.std(num_false_non_targets_list)
+        E_num_false_non_targets_list.append(E_num_false_non_targets)
+        std_num_false_non_targets_list.append(std_num_false_non_targets)
+
         log(
             INFO, "",
             E_time_to_deanonymize=E_time_to_deanonymize,
             std_time_to_deanonymize=std_time_to_deanonymize,
             E_num_rounds=E_num_rounds,
             std_num_rounds=std_num_rounds,
-            target_server_accuracy=disclosure_attack_result.target_server_accuracy,
+            E_true_target_rate=E_true_target_rate,
+            std_true_target_rate=std_true_target_rate,
+            E_num_false_non_targets=E_num_false_non_targets,
+            std_num_false_non_targets=std_num_false_non_targets,
+            target_server_set_accuracy=disclosure_attack_result.target_server_set_accuracy,
         )
-
-        E_time_to_deanonymize_list.append(E_time_to_deanonymize)
-        std_time_to_deanonymize_list.append(std_time_to_deanonymize)
-        E_num_rounds_list.append(E_num_rounds)
-        std_num_rounds_list.append(std_num_rounds)
 
     log(
         INFO, "",
@@ -73,6 +100,10 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
         std_time_to_deanonymize_list=std_time_to_deanonymize_list,
         E_num_rounds_list=E_num_rounds_list,
         std_num_rounds_list=std_num_rounds_list,
+        E_true_target_rate_list=E_true_target_rate_list,
+        std_true_target_rate_list=std_true_target_rate_list,
+        E_num_false_non_targets_list=E_num_false_non_targets_list,
+        std_num_false_non_targets_list=std_num_false_non_targets_list,
     )
     # plot.errorbar(num_servers_list, E_time_to_deanonymize_list, yerr=std_time_to_deanonymize_list, color=NICE_BLUE, marker="x")
     plot.errorbar(num_servers_list, E_num_rounds_list, yerr=std_num_rounds_list, color=NICE_BLUE, marker="x")

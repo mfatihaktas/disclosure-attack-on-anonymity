@@ -112,7 +112,7 @@ class TorSystem():
         return self.adversary.num_sample_sets_collected
 
     def get_target_server_ids(self) -> set[str]:
-        return self.adversary.target_server_ids
+        return self.adversary.target_server_id_set
 
     def run(self):
         log(DEBUG, "Started")
@@ -121,10 +121,26 @@ class TorSystem():
 
 
 @dataclasses.dataclass
+class ClassificationResult:
+    num_true_targets: int
+    num_false_targets: int
+    num_false_non_targets: int
+
+    true_target_rate: float = dataclasses.field(init=False)
+
+    def __post_init__(self):
+        self.true_target_rate = (
+            self.num_true_targets
+            / (self.num_true_targets + self.num_false_non_targets)
+        )
+
+
+@dataclasses.dataclass
 class DisclosureAttackResult:
     time_to_deanonymize_list: list[float]
     num_rounds_list: list[int]
-    target_server_accuracy: float
+    target_server_set_accuracy: float
+    classification_result_list: list[ClassificationResult]
 
 
 def sim_w_disclosure_attack(
@@ -168,19 +184,20 @@ def sim_w_disclosure_attack(
             tor.get_num_rounds()
         )
 
-    true_target_server_ids = set(
+    true_target_server_id_set = set(
         f"s{server_id}" for server_id in range(num_target_servers)
     )
-    # log(WARNING, "", true_target_server_ids=true_target_server_ids)
+    # log(WARNING, "", true_target_server_id_set=true_target_server_id_set)
 
     time_to_deanonymize_list = []
     num_rounds_list = []
-    num_correct_target_server_ids = 0
+    num_correct_target_server_sets = 0
+    classification_result_list = []
     for _ in range(num_samples):
-        target_server_ids, time_to_deanonymize, num_rounds = sim()
+        target_server_id_set, time_to_deanonymize, num_rounds = sim()
         log(
             INFO, "",
-            target_server_ids=target_server_ids,
+            target_server_id_set=target_server_id_set,
             time_to_deanonymize=time_to_deanonymize,
             num_rounds=num_rounds,
         )
@@ -188,10 +205,27 @@ def sim_w_disclosure_attack(
         time_to_deanonymize_list.append(time_to_deanonymize)
         num_rounds_list.append(num_rounds)
 
-        num_correct_target_server_ids += int(true_target_server_ids == target_server_ids)
+        num_correct_target_server_sets += int(true_target_server_id_set == target_server_id_set)
+
+        # Append `classification_result`
+        num_true_targets = 0
+        num_false_targets = 0
+        for target_server_id in target_server_id_set:
+            if target_server_id in true_target_server_id_set:
+                num_true_targets += 1
+            else:
+                num_false_targets += 1
+
+        classification_result = ClassificationResult(
+            num_true_targets=num_true_targets,
+            num_false_targets=num_false_targets,
+            num_false_non_targets=num_target_servers - num_true_targets,
+        )
+        classification_result_list.append(classification_result)
 
     return DisclosureAttackResult(
         time_to_deanonymize_list=time_to_deanonymize_list,
         num_rounds_list=num_rounds_list,
-        target_server_accuracy=num_correct_target_server_ids / num_samples
+        target_server_set_accuracy=num_correct_target_server_sets / num_samples,
+        classification_result_list=classification_result_list,
     )
