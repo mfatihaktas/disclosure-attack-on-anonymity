@@ -159,7 +159,8 @@ if __name__ == "__main__":
     # num_servers_list = [3]
     # num_servers_list = list(range(3, 20))
     # num_servers_list = [3, 10, 20, 50, 100, 200]
-    num_servers_list = [3, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000]
+    num_servers_list = [3, 20, 50, 100, 200, 400]
+    # num_servers_list = [3, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000]
     diff_threshold = 0.003
     num_samples = 5
 
