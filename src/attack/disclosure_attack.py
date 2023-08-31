@@ -67,10 +67,10 @@ class DisclosureAttack(adversary_module.Adversary):
             )
 
         self.num_sample_sets_collected += 1
-        # log(INFO, "updated",
-        #     num_sample_sets_collected=self.num_sample_sets_collected,
-        #     sample_candidate_set=sample_candidate_set,
-        # )
+        log(INFO, "updated",
+            num_sample_sets_collected=self.num_sample_sets_collected,
+            sample_candidate_set=sample_candidate_set,
+        )
 
     def _check_for_completion(self) -> Optional[list[str]]:
         if self.num_sample_sets_collected < 10:
@@ -169,10 +169,10 @@ class DisclosureAttack(adversary_module.Adversary):
         num_msgs_recved_for_get_request: int,
     ):
         slog(
-            DEBUG, self.env, self,
+            INFO, self.env, self,
             "client completed request",
             num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
-            server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
+            # server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
         )
 
         sample_candidate_set = self.get_sample_candidate_set(
@@ -291,7 +291,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
 
         self.num_rounds_stationary += 1
         log(
-            INFO, "",
+            DEBUG, "",
             server_id_to_weight_map=self.server_id_to_weight_map,
             server_id_to_weight_map_for_baseline_inspection=self.server_id_to_weight_map_for_baseline_inspection,
             server_id_avg_weight_diff_map=self.server_id_avg_weight_diff_map,
