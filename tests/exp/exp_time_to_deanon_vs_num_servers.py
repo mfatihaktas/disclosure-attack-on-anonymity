@@ -122,10 +122,11 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
 
     ax = axs[0]
     plot.sca(ax)
-    plot.errorbar(num_servers_list, E_num_rounds_list, yerr=std_num_rounds_list, color=NICE_BLUE, marker="o")
     plot.xlabel("Number of candidate servers", fontsize=fontsize)
-    # plot.ylabel(r"$T_{\mathrm{deanon}}$", fontsize=fontsize)
-    plot.ylabel("Number of rounds", fontsize=fontsize)
+    # plot.errorbar(num_servers_list, E_num_rounds_list, yerr=std_num_rounds_list, color=NICE_BLUE, marker="o")
+    # plot.ylabel("Number of rounds", fontsize=fontsize)
+    plot.errorbar(num_servers_list, E_time_to_deanonymize_list, yerr=std_time_to_deanonymize_list, color=NICE_BLUE, marker="o")
+    plot.ylabel("Time-to-deanonymize", fontsize=fontsize)
 
     ax = axs[1]
     plot.sca(ax)
