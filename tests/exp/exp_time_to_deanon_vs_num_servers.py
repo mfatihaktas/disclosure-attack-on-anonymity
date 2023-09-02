@@ -4,7 +4,7 @@ from src.prob import random_variable
 from src.sim import tor as tor_module
 
 from src.debug_utils import log, INFO
-from src.plot_utils import NICE_BLUE, NICE_RED, plot
+from src.plot_utils import NICE_BLUE, NICE_ORANGE, NICE_RED, plot
 
 
 def plot_avg_time_to_deanonymize_vs_num_servers(
@@ -37,6 +37,7 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
     std_true_target_rate_list = []
     E_num_false_non_targets_list = []
     std_num_false_non_targets_list = []
+    num_false_targets_tuple_list = []
     for num_servers in num_servers_list:
         log(INFO, f">> num_servers= {num_servers}")
         num_clients = num_servers
@@ -81,6 +82,13 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
         E_num_false_non_targets_list.append(E_num_false_non_targets)
         std_num_false_non_targets_list.append(std_num_false_non_targets)
 
+        num_false_targets_tuple_list.append(
+            [
+                classification_result.num_false_targets
+                for classification_result in disclosure_attack_result.classification_result_list
+            ]
+        )
+
         log(
             INFO, "",
             E_time_to_deanonymize=E_time_to_deanonymize,
@@ -92,6 +100,7 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
             E_num_false_non_targets=E_num_false_non_targets,
             std_num_false_non_targets=std_num_false_non_targets,
             target_server_set_accuracy=disclosure_attack_result.target_server_set_accuracy,
+            num_false_targets_tuple_list=num_false_targets_tuple_list,
         )
 
     log(
@@ -108,7 +117,8 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
 
     # Plot
     fontsize = 14
-    fig, axs = plot.subplots(1, 2)
+    num_columns = 3
+    fig, axs = plot.subplots(1, num_columns)
 
     ax = axs[0]
     plot.sca(ax)
@@ -123,6 +133,14 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
     plot.xlabel("Number of candidate servers", fontsize=fontsize)
     plot.ylabel("True target rate", fontsize=fontsize)
 
+    ax = axs[2]
+    plot.sca(ax)
+    for num_servers, num_false_targets_tuple in zip(num_servers_list, num_false_targets_tuple_list):
+        for num_false_targets in num_false_targets_tuple:
+            plot.plot([num_servers], [num_false_targets], color=NICE_ORANGE, marker="x", mew=2, ms=5)
+    plot.xlabel("Number of candidate servers", fontsize=fontsize)
+    plot.ylabel("Number of false targets", fontsize=fontsize)
+
     title = (
         r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
         r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
@@ -132,7 +150,7 @@ def plot_avg_time_to_deanonymize_vs_num_servers(
     )
     plot.suptitle(title, fontsize=fontsize)
 
-    fig.set_size_inches(2 * 6, 4)
+    fig.set_size_inches(num_columns * 6, 4)
     plot.subplots_adjust(hspace=0.25, wspace=0.25)
 
     plot_name = (
@@ -156,13 +174,13 @@ if __name__ == "__main__":
     idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
     num_target_servers = 2
-    # num_servers_list = [3]
+    num_servers_list = [3]
     # num_servers_list = list(range(3, 20))
     # num_servers_list = [3, 10, 20, 50, 100, 200]
-    num_servers_list = [3, 20, 50, 100, 200, 400]
+    # num_servers_list = [3, 20, 50, 100, 200, 400]
     # num_servers_list = [3, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000]
     diff_threshold = 0.003
-    num_samples = 5
+    num_samples = 2  # 5
 
     plot_avg_time_to_deanonymize_vs_num_servers(
         network_delay_rv=network_delay_rv,
