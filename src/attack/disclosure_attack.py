@@ -69,7 +69,8 @@ class DisclosureAttack(adversary_module.Adversary):
         self.num_sample_sets_collected += 1
         log(INFO, "updated",
             num_sample_sets_collected=self.num_sample_sets_collected,
-            sample_candidate_set=sample_candidate_set,
+            num_sampled_candidates=len(sample_candidate_set),
+            # sample_candidate_set=sample_candidate_set,
         )
 
     def _check_for_completion(self) -> Optional[list[str]]:
