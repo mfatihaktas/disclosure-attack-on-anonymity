@@ -333,3 +333,36 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
             )
 
         return None
+
+    def client_completed_get_request(
+        self,
+        num_msgs_recved_for_get_request: int,
+    ):
+        slog(
+            INFO, self.env, self,
+            "client completed request",
+            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+            # server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
+        )
+
+        sample_candidate_set = self.get_sample_candidate_set(
+            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+        )
+        check(sample_candidate_set, "`sample_candidate_set` cannot be empty")
+
+        self.trim_server_id_to_time_epochs_msg_sent_map()
+
+        # Update the attack state
+        self.update(sample_candidate_set=sample_candidate_set)
+
+        # Check if the attack is completed
+        self.target_server_id_set = self.check_if_attack_completed()
+        if self.target_server_id_set is not None:
+            slog(
+                INFO, self.env, self,
+                "completed attack",
+                target_server_id_set=self.target_server_id_set,
+                server_id_avg_weight_diff_map=self.server_id_avg_weight_diff_map,
+            )
+            self.time_to_complete_attack = self.env.now
+            self.attack_completed_event.succeed()
