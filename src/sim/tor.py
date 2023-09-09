@@ -126,11 +126,12 @@ class ClassificationResult:
     num_false_targets: int
     num_false_non_targets: int
 
-    true_target_rate: float = dataclasses.field(init=False)
+    prob_false_target: float = dataclasses.field(init=False)
+    prob_false_non_target: float = dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.true_target_rate = (
-            self.num_true_targets
+        self.prob_false_target = (
+            self.num_false_non_targets
             / (self.num_true_targets + self.num_false_non_targets)
         )
 
