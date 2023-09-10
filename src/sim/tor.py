@@ -122,17 +122,23 @@ class TorSystem():
 
 @dataclasses.dataclass
 class ClassificationResult:
-    num_true_targets: int
-    num_false_targets: int
-    num_false_non_targets: int
+    num_targets_identified_as_target: int
+    num_targets_identified_as_non_target: int
+    num_non_targets_identified_as_target: int
+    num_non_targets_identified_as_non_target: int
 
-    prob_false_target: float = dataclasses.field(init=False)
-    prob_false_non_target: float = dataclasses.field(init=False)
+    prob_target_identified_as_non_target: float = dataclasses.field(init=False)
+    prob_non_target_identified_as_target: float = dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.prob_false_target = (
-            self.num_false_non_targets
-            / (self.num_true_targets + self.num_false_non_targets)
+        self.prob_target_identified_as_non_target = (
+            self.num_targets_identified_as_non_target
+            / (self.num_targets_identified_as_target + self.num_targets_identified_as_non_target)
+        )
+
+        self.prob_non_target_identified_as_target = (
+            self.num_non_targets_identified_as_target
+            / (self.num_non_targets_identified_as_target + self.num_non_targets_identified_as_non_target)
         )
 
 
@@ -209,18 +215,18 @@ def sim_w_disclosure_attack(
         num_correct_target_server_sets += int(true_target_server_id_set == target_server_id_set)
 
         # Append `classification_result`
-        num_true_targets = 0
-        num_false_targets = 0
+        num_targets_identified_as_target = 0
+        num_non_targets_identified_as_target = 0
         for target_server_id in target_server_id_set:
             if target_server_id in true_target_server_id_set:
-                num_true_targets += 1
+                num_targets_identified_as_target += 1
             else:
-                num_false_targets += 1
+                num_non_targets_identified_as_target += 1
 
         classification_result = ClassificationResult(
-            num_true_targets=num_true_targets,
-            num_false_targets=num_false_targets,
-            num_false_non_targets=num_target_servers - num_true_targets,
+            num_targets_identified_as_target=num_targets_identified_as_target,
+            num_non_targets_identified_as_target=num_non_targets_identified_as_target,
+            num_targets_identified_as_non_target=num_target_servers - num_targets_identified_as_target,
         )
         classification_result_list.append(classification_result)
 
