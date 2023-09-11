@@ -225,8 +225,9 @@ def sim_w_disclosure_attack(
 
         classification_result = ClassificationResult(
             num_targets_identified_as_target=num_targets_identified_as_target,
-            num_non_targets_identified_as_target=num_non_targets_identified_as_target,
             num_targets_identified_as_non_target=num_target_servers - num_targets_identified_as_target,
+            num_non_targets_identified_as_target=num_non_targets_identified_as_target,
+            num_non_targets_identified_as_non_target=num_servers - num_target_servers - num_non_targets_identified_as_target,
         )
         classification_result_list.append(classification_result)
 
