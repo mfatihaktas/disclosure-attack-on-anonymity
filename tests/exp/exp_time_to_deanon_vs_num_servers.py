@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # num_servers_list = [3, 20, 50, 100, 200, 400]
     # num_servers_list = [3, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000]
     diff_threshold = 0.003
-    num_samples = 2  # 5
+    num_samples = 1  # 5
 
     plot.plot_time_to_deanonymize_vs_num_servers(
         network_delay_rv=network_delay_rv,

@@ -64,15 +64,6 @@ def plot_time_to_deanonymize_vs_num_servers(
         E_num_rounds_list.append(E_num_rounds)
         std_num_rounds_list.append(std_num_rounds)
 
-        prob_non_target_identified_as_target_list = [
-            classification_result.prob_non_target_identified_as_target
-            for classification_result in disclosure_attack_result.classification_result_list
-        ]
-        E_prob_non_target_identified_as_target = numpy.mean(prob_non_target_identified_as_target_list)
-        std_prob_non_target_identified_as_target = numpy.std(prob_non_target_identified_as_target_list)
-        E_prob_non_target_identified_as_target_list.append(E_prob_non_target_identified_as_target)
-        std_prob_non_target_identified_as_target_list.append(std_prob_non_target_identified_as_target)
-
         prob_target_identified_as_non_target_list = [
             classification_result.prob_target_identified_as_non_target
             for classification_result in disclosure_attack_result.classification_result_list
@@ -82,19 +73,14 @@ def plot_time_to_deanonymize_vs_num_servers(
         E_prob_target_identified_as_non_target_list.append(E_prob_target_identified_as_non_target)
         std_prob_target_identified_as_non_target_list.append(std_prob_target_identified_as_non_target)
 
-        num_false_non_targets_list = [
-            classification_result.num_false_non_targets
+        prob_non_target_identified_as_target_list = [
+            classification_result.prob_non_target_identified_as_target
             for classification_result in disclosure_attack_result.classification_result_list
         ]
-        E_num_false_non_targets = numpy.mean(num_false_non_targets_list)
-        std_num_false_non_targets = numpy.std(num_false_non_targets_list)
-
-        num_false_targets_tuple_list.append(
-            [
-                classification_result.num_false_targets
-                for classification_result in disclosure_attack_result.classification_result_list
-            ]
-        )
+        E_prob_non_target_identified_as_target = numpy.mean(prob_non_target_identified_as_target_list)
+        std_prob_non_target_identified_as_target = numpy.std(prob_non_target_identified_as_target_list)
+        E_prob_non_target_identified_as_target_list.append(E_prob_non_target_identified_as_target)
+        std_prob_non_target_identified_as_target_list.append(std_prob_non_target_identified_as_target)
 
         log(
             INFO, "",
@@ -104,8 +90,6 @@ def plot_time_to_deanonymize_vs_num_servers(
             std_num_rounds=std_num_rounds,
             E_prob_non_target_identified_as_target=E_prob_non_target_identified_as_target,
             std_prob_non_target_identified_as_target=std_prob_non_target_identified_as_target,
-            E_num_false_non_targets=E_num_false_non_targets,
-            std_num_false_non_targets=std_num_false_non_targets,
             target_server_set_accuracy=disclosure_attack_result.target_server_set_accuracy,
             num_false_targets_tuple_list=num_false_targets_tuple_list,
         )
@@ -116,10 +100,10 @@ def plot_time_to_deanonymize_vs_num_servers(
         std_time_to_deanonymize_list=std_time_to_deanonymize_list,
         E_num_rounds_list=E_num_rounds_list,
         std_num_rounds_list=std_num_rounds_list,
-        E_prob_non_target_identified_as_target_list=E_prob_non_target_identified_as_target_list,
-        std_prob_non_target_identified_as_target_list=std_prob_non_target_identified_as_target_list,
         E_prob_target_identified_as_non_target_list=E_prob_target_identified_as_non_target_list,
         std_prob_target_identified_as_non_target_list=std_prob_target_identified_as_non_target_list,
+        E_prob_non_target_identified_as_target_list=E_prob_non_target_identified_as_target_list,
+        std_prob_non_target_identified_as_target_list=std_prob_non_target_identified_as_target_list,
     )
 
     # Plot
@@ -137,15 +121,15 @@ def plot_time_to_deanonymize_vs_num_servers(
 
     ax = axs[1]
     plot.sca(ax)
-    plot.errorbar(num_servers_list, E_prob_non_target_identified_as_target_list, yerr=std_prob_non_target_identified_as_target_list, color=NICE_RED, marker="o")
-    plot.xlabel("Number of candidate servers", fontsize=fontsize)
-    plot.ylabel("Prob{non-target identified as target}", fontsize=fontsize)
-
-    ax = axs[2]
-    plot.sca(ax)
     plot.errorbar(num_servers_list, E_prob_target_identified_as_non_target_list, yerr=std_prob_target_identified_as_non_target_list, color=NICE_ORANGE, marker="o")
     plot.xlabel("Number of candidate servers", fontsize=fontsize)
     plot.ylabel("Prob{target identified as non-target}", fontsize=fontsize)
+
+    ax = axs[2]
+    plot.sca(ax)
+    plot.errorbar(num_servers_list, E_prob_non_target_identified_as_target_list, yerr=std_prob_non_target_identified_as_target_list, color=NICE_RED, marker="o")
+    plot.xlabel("Number of candidate servers", fontsize=fontsize)
+    plot.ylabel("Prob{non-target identified as target}", fontsize=fontsize)
 
     title = (
         r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
