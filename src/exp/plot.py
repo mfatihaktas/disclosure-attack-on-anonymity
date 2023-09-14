@@ -123,13 +123,13 @@ def plot_time_to_deanonymize_vs_num_servers(
     plot.sca(ax)
     plot.errorbar(num_servers_list, E_prob_target_identified_as_non_target_list, yerr=std_prob_target_identified_as_non_target_list, color=NICE_ORANGE, marker="o")
     plot.xlabel("Number of candidate servers", fontsize=fontsize)
-    plot.ylabel("Prob{target identified as non-target}", fontsize=fontsize)
+    plot.ylabel(r"$\mathrm{Prob}\{$target identified as non-target$\}$", fontsize=fontsize)
 
     ax = axs[2]
     plot.sca(ax)
     plot.errorbar(num_servers_list, E_prob_non_target_identified_as_target_list, yerr=std_prob_non_target_identified_as_target_list, color=NICE_RED, marker="o")
     plot.xlabel("Number of candidate servers", fontsize=fontsize)
-    plot.ylabel("Prob{non-target identified as target}", fontsize=fontsize)
+    plot.ylabel(r"$\mathrm{Prob}\{$non-target identified as target$\}$", fontsize=fontsize)
 
     title = (
         r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
