@@ -1,5 +1,6 @@
 import bisect
 import collections
+import dataclasses
 import numpy
 import simpy
 import sklearn.cluster
@@ -46,6 +47,48 @@ class DisclosureAttack(adversary_module.Adversary):
     def server_recved_msg(self, msg: message.Message):
         pass
 
+    def server_sent_msg(self, msg: message.Message):
+        slog(DEBUG, self.env, self, "server sent msg")
+
+        server_id = msg.src_id
+        bisect.insort_left(
+            self.server_id_to_time_epochs_msg_sent_map[server_id],
+            self.env.now
+        )
+
+    def client_completed_get_request(
+        self,
+        num_msgs_recved_for_get_request: int,
+    ):
+        slog(
+            INFO, self.env, self,
+            "client completed request",
+            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+            # server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
+        )
+
+        sample_candidate_set = self.get_sample_candidate_set(
+            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+        )
+        check(sample_candidate_set, "`sample_candidate_set` cannot be empty")
+
+        self.trim_server_id_to_time_epochs_msg_sent_map()
+
+        # Update the attack state
+        self.update(sample_candidate_set=sample_candidate_set)
+
+        # Check if the attack is completed
+        self.target_server_id_set = self.check_if_attack_completed()
+        if self.target_server_id_set is not None:
+            slog(
+                INFO, self.env, self,
+                "completed attack",
+                target_server_id_set=self.target_server_id_set,
+                server_id_to_weight_map=self.server_id_to_weight_map,
+            )
+            self.time_to_complete_attack = self.env.now
+            self.attack_completed_event.succeed()
+
     def update(self, sample_candidate_set: set[str]):
         slog(
             DEBUG, self.env, self,
@@ -67,7 +110,8 @@ class DisclosureAttack(adversary_module.Adversary):
             )
 
         self.num_sample_sets_collected += 1
-        log(INFO, "updated",
+        log(
+            INFO, "updated",
             num_sample_sets_collected=self.num_sample_sets_collected,
             num_sampled_candidates=len(sample_candidate_set),
             # sample_candidate_set=sample_candidate_set,
@@ -164,48 +208,6 @@ class DisclosureAttack(adversary_module.Adversary):
         for server_id, time_epochs_msg_sent in self.server_id_to_time_epochs_msg_sent_map.items():
             left_index = bisect.bisect_left(time_epochs_msg_sent, min_time_epoch)
             self.server_id_to_time_epochs_msg_sent_map[server_id] = time_epochs_msg_sent[left_index:]
-
-    def client_completed_get_request(
-        self,
-        num_msgs_recved_for_get_request: int,
-    ):
-        slog(
-            INFO, self.env, self,
-            "client completed request",
-            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
-            # server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
-        )
-
-        sample_candidate_set = self.get_sample_candidate_set(
-            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
-        )
-        check(sample_candidate_set, "`sample_candidate_set` cannot be empty")
-
-        self.trim_server_id_to_time_epochs_msg_sent_map()
-
-        # Update the attack state
-        self.update(sample_candidate_set=sample_candidate_set)
-
-        # Check if the attack is completed
-        self.target_server_id_set = self.check_if_attack_completed()
-        if self.target_server_id_set is not None:
-            slog(
-                INFO, self.env, self,
-                "completed attack",
-                target_server_id_set=self.target_server_id_set,
-                server_id_to_weight_map=self.server_id_to_weight_map,
-            )
-            self.time_to_complete_attack = self.env.now
-            self.attack_completed_event.succeed()
-
-    def server_sent_msg(self, msg: message.Message):
-        slog(DEBUG, self.env, self, "server sent msg")
-
-        server_id = msg.src_id
-        bisect.insort_left(
-            self.server_id_to_time_epochs_msg_sent_map[server_id],
-            self.env.now
-        )
 
 
 class DisclosureAttack_wBaselineInspection(DisclosureAttack):
@@ -348,7 +350,8 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         sample_candidate_set = self.get_sample_candidate_set(
             num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
         )
-        check(sample_candidate_set, "`sample_candidate_set` cannot be empty")
+        if not sample_candidate_set:
+            return
 
         self.trim_server_id_to_time_epochs_msg_sent_map()
 
@@ -366,3 +369,33 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
             )
             self.time_to_complete_attack = self.env.now
             self.attack_completed_event.succeed()
+
+
+@dataclasses.dataclass
+class ClassificationResult:
+    num_targets_identified_as_target: int
+    num_targets_identified_as_non_target: int
+    num_non_targets_identified_as_target: int
+    num_non_targets_identified_as_non_target: int
+
+    prob_target_identified_as_non_target: float = dataclasses.field(init=False)
+    prob_non_target_identified_as_target: float = dataclasses.field(init=False)
+
+    def __post_init__(self):
+        self.prob_target_identified_as_non_target = (
+            self.num_targets_identified_as_non_target
+            / (self.num_targets_identified_as_target + self.num_targets_identified_as_non_target)
+        )
+
+        self.prob_non_target_identified_as_target = (
+            self.num_non_targets_identified_as_target
+            / (self.num_non_targets_identified_as_target + self.num_non_targets_identified_as_non_target)
+        )
+
+
+@dataclasses.dataclass
+class DisclosureAttackResult:
+    time_to_deanonymize_list: list[float]
+    num_rounds_list: list[int]
+    target_server_set_accuracy: float
+    classification_result_list: list[ClassificationResult]
