@@ -239,7 +239,7 @@ def sim_w_disclosure_attack_w_joblib(
     sim_result_list = joblib.Parallel(n_jobs=-1, prefer="threads")(
         [
             joblib.delayed(sim)()
-            for i in range(10)
+            for _ in range(num_samples)
         ]
     )
 

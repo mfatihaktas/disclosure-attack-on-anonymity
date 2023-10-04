@@ -341,14 +341,17 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         num_msgs_recved_for_get_request: int,
     ):
         slog(
-            INFO, self.env, self,
-            "client completed request",
+            INFO, self.env, self, "client completed request",
             num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
             # server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
         )
 
         sample_candidate_set = self.get_sample_candidate_set(
             num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+        )
+        slog(
+            INFO, self.env, self, "",
+            sample_candidate_set=sample_candidate_set,
         )
         if not sample_candidate_set:
             return
