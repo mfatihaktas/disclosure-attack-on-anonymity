@@ -61,7 +61,7 @@ class TorSystem():
                     env=self.env,
                     _id="c-target",
                     server_id_list=[
-                        self.server_list[j]._id
+                        self.server_list[j % num_servers]._id
                         for j in range(num_target_servers)
                     ],
                     idle_time_rv=idle_time_rv_for_target_client,
