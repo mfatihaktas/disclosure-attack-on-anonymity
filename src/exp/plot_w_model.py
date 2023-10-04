@@ -37,7 +37,7 @@ def plot_time_to_deanonymize_vs_num_servers(
         log(INFO, f">> num_servers= {num_servers}")
         num_clients = num_servers
 
-        disclosure_attack_result = tor_model_module.sim_w_disclosure_attack(
+        disclosure_attack_result = tor_model_module.sim_w_disclosure_attack_w_joblib(
             num_clients=num_clients,
             num_servers=num_servers,
             num_target_servers=num_target_servers,

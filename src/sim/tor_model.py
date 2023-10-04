@@ -1,3 +1,4 @@
+import joblib
 import random
 import simpy
 
@@ -153,6 +154,101 @@ def sim_w_disclosure_attack(
     classification_result_list = []
     for _ in range(num_samples):
         target_server_id_set, time_to_deanonymize, num_rounds = sim()
+        log(
+            INFO, "",
+            target_server_id_set=target_server_id_set,
+            time_to_deanonymize=time_to_deanonymize,
+            num_rounds=num_rounds,
+        )
+
+        time_to_deanonymize_list.append(time_to_deanonymize)
+        num_rounds_list.append(num_rounds)
+
+        num_correct_target_server_sets += int(true_target_server_id_set == target_server_id_set)
+
+        # Append `classification_result`
+        num_targets_identified_as_target = 0
+        num_non_targets_identified_as_target = 0
+        for target_server_id in target_server_id_set:
+            if target_server_id in true_target_server_id_set:
+                num_targets_identified_as_target += 1
+            else:
+                num_non_targets_identified_as_target += 1
+
+        classification_result = disclosure_attack.ClassificationResult(
+            num_targets_identified_as_target=num_targets_identified_as_target,
+            num_targets_identified_as_non_target=num_target_servers - num_targets_identified_as_target,
+            num_non_targets_identified_as_target=num_non_targets_identified_as_target,
+            num_non_targets_identified_as_non_target=num_servers - num_target_servers - num_non_targets_identified_as_target,
+        )
+        classification_result_list.append(classification_result)
+
+    return disclosure_attack.DisclosureAttackResult(
+        time_to_deanonymize_list=time_to_deanonymize_list,
+        num_rounds_list=num_rounds_list,
+        target_server_set_accuracy=num_correct_target_server_sets / num_samples,
+        classification_result_list=classification_result_list,
+    )
+
+
+def sim_w_disclosure_attack_w_joblib(
+    num_clients: int,
+    num_servers: int,
+    num_target_servers: int,
+    prob_target_server_recv: float,
+    prob_non_target_server_recv: float,
+    diff_threshold: float,
+    num_samples: int,
+) -> disclosure_attack.DisclosureAttackResult:
+    max_msg_delivery_time = 1
+
+    def sim():
+        env = simpy.Environment()
+
+        # adversary = disclosure_attack.DisclosureAttack(
+        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
+            env=env,
+            max_msg_delivery_time=max_msg_delivery_time,
+            diff_threshold=diff_threshold,
+        )
+
+        tor = TorModel(
+            env=env,
+            num_clients=num_clients,
+            num_servers=num_servers,
+            num_target_servers=num_target_servers,
+            max_msg_delivery_time=max_msg_delivery_time,
+            prob_target_server_recv=prob_target_server_recv,
+            prob_non_target_server_recv=prob_non_target_server_recv,
+        )
+
+        tor.register_adversary(adversary=adversary)
+        tor.run()
+
+        return (
+            tor.get_target_server_ids(),
+            tor.get_attack_completion_time(),
+            tor.get_num_rounds()
+        )
+
+    true_target_server_id_set = set(
+        f"s{server_id}" for server_id in range(num_target_servers)
+    )
+    # log(WARNING, "", true_target_server_id_set=true_target_server_id_set)
+
+    sim_result_list = joblib.Parallel(n_jobs=-1, prefer="threads")(
+        [
+            joblib.delayed(sim)()
+            for i in range(10)
+        ]
+    )
+
+    time_to_deanonymize_list = []
+    num_rounds_list = []
+    num_correct_target_server_sets = 0
+    classification_result_list = []
+    for sim_result in sim_result_list:
+        target_server_id_set, time_to_deanonymize, num_rounds = sim_result
         log(
             INFO, "",
             target_server_id_set=target_server_id_set,
