@@ -87,11 +87,11 @@ def test_DisclosureAttack(
     env.run(until=adversary.attack_completed_event)
 
 
-def test_DisclosureAttack_wBaselineInspection(
+def test_DisclosureAttack_wBaselineInspection_wStationaryRounds(
     tor_system: tor_module.TorSystem,
 ):
     env = tor_system.env
-    adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
+    adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
         env=env,
         max_msg_delivery_time=tor_system.network_delay_rv.max_value,
         diff_threshold=0.003,

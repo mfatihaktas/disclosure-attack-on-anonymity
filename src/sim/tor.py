@@ -134,7 +134,7 @@ def sim_w_disclosure_attack(
         env = simpy.Environment()
 
         # adversary = disclosure_attack.DisclosureAttack(
-        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
+        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
             max_msg_delivery_time=network_delay_rv.max_value,
             diff_threshold=diff_threshold,

@@ -118,7 +118,7 @@ def sim_w_disclosure_attack(
         env = simpy.Environment()
 
         # adversary = disclosure_attack.DisclosureAttack(
-        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
+        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
             diff_threshold=diff_threshold,
@@ -206,7 +206,7 @@ def sim_w_disclosure_attack_w_joblib(
         env = simpy.Environment()
 
         # adversary = disclosure_attack.DisclosureAttack(
-        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection(
+        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
             diff_threshold=diff_threshold,
