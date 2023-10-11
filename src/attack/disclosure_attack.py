@@ -215,14 +215,12 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         self,
         env: simpy.Environment,
         max_msg_delivery_time: float,
-        diff_threshold: float,
     ):
         super().__init__(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
             error_percent=None,
         )
-        self.diff_threshold = diff_threshold
 
         self.server_id_to_weight_map_for_baseline_inspection = collections.defaultdict(float)
         self.server_id_avg_weight_diff_map = collections.defaultdict(float)
@@ -230,7 +228,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         self.baseline_inspection_process = env.process(self.baseline_inspection())
 
     def __repr__(self):
-        return f"DisclosureAttack_wBaselineInspection(diff_threshold= {self.diff_threshold})"
+        return "DisclosureAttack_wBaselineInspection"
 
     def baseline_inspection(self):
         interval_rv = random_variable.Exponential(mu=1)
@@ -310,7 +308,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
             self.attack_completed_event.succeed()
 
 
-class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack):
+class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wBaselineInspection):
     def __init__(
         self,
         env: simpy.Environment,
@@ -320,14 +318,8 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack):
         super().__init__(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
-            error_percent=None,
         )
         self.diff_threshold = diff_threshold
-
-        self.server_id_to_weight_map_for_baseline_inspection = collections.defaultdict(float)
-        self.server_id_avg_weight_diff_map = collections.defaultdict(float)
-        self.num_rounds_stationary = 0
-        self.baseline_inspection_process = env.process(self.baseline_inspection())
 
     def __repr__(self):
         return f"DisclosureAttack_wBaselineInspection_wStationaryRounds(diff_threshold= {self.diff_threshold})"
