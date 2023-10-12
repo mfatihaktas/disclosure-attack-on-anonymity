@@ -313,18 +313,18 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
         self,
         env: simpy.Environment,
         max_msg_delivery_time: float,
-        diff_threshold: float,
+        stability_threshold: float,
     ):
         super().__init__(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
         )
-        self.diff_threshold = diff_threshold
+        self.stability_threshold = stability_threshold
 
         self.num_rounds_stationary = 0
 
     def __repr__(self):
-        return f"DisclosureAttack_wBaselineInspection_wStationaryRounds(diff_threshold= {self.diff_threshold})"
+        return f"DisclosureAttack_wBaselineInspection_wStationaryRounds(stability_threshold= {self.stability_threshold})"
 
     def check_if_attack_completed(self) -> Optional[set[str]]:
         if self.num_sample_sets_collected < 10:
@@ -343,7 +343,7 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
             diff = weight_diff - avg_weight_diff
             self.server_id_weight_diff_map[server_id] += 0.9 * diff
 
-            if abs(diff) > self.diff_threshold:
+            if abs(diff) > self.stability_threshold:
                 self.num_rounds_stationary = 0
 
         self.num_rounds_stationary += 1
@@ -396,6 +396,7 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
         self,
         env: simpy.Environment,
         max_msg_delivery_time: float,
+        max_variance: float,
     ):
         self.server_id_to_num_times_in_sample_set_map = collections.defaultdict(int)
         self.server_id_to_num_in_baseline_sample_set_map = collections.defaultdict(int)
@@ -404,6 +405,9 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
         )
+        self.max_variance = max_variance
+
+        self.server_id_to_signal_map = None
 
     def __repr__(self):
         return "DisclosureAttack_wBaselineInspection_wBayesianEstimate"
@@ -500,13 +504,16 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             ):
                 return None
 
+        # Record the "signal" in the estimates available for detection
+        self.server_id_to_signal_map = {
+            server_id: p_rv.mean() - server_id_to_p_baseline_rv[server_id].mean()
+            for server_id, p_rv in self.server_id_to_p_rv.items()
+        }
+
         # Cluster the diffs
         data = [
-            [
-                server_id,
-                p_rv.mean() - server_id_to_p_baseline_rv[server_id]
-            ]
-            for server_id, p_rv in self.server_id_to_p_rv.items()
+            [server_id, signal]
+            for server_id, signal in self.server_id_to_signal_map.items()
         ]
         array = numpy.array([[row[1]] for row in data])
         centroids, labels, inertia = sklearn.cluster.k_means(array, 2)

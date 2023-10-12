@@ -11,8 +11,8 @@ def plot_time_to_deanonymize_vs_num_servers(
     num_servers_list: list[int],
     prob_target_server_recv: float,
     prob_non_target_server_recv: float,
-    diff_threshold: float,
     num_samples: int,
+    **kwargs,
 ):
     log(
         INFO, "Started",
@@ -20,8 +20,8 @@ def plot_time_to_deanonymize_vs_num_servers(
         num_servers_list=num_servers_list,
         prob_target_server_recv=prob_target_server_recv,
         prob_non_target_server_recv=prob_non_target_server_recv,
-        diff_threshold=diff_threshold,
         num_samples=num_samples,
+        kwargs=kwargs,
     )
 
     E_time_to_deanonymize_list = []
@@ -43,8 +43,8 @@ def plot_time_to_deanonymize_vs_num_servers(
             num_target_servers=num_target_servers,
             prob_target_server_recv=prob_target_server_recv,
             prob_non_target_server_recv=prob_non_target_server_recv,
-            diff_threshold=diff_threshold,
             num_samples=num_samples,
+            **kwargs,
         )
         log(INFO, "", disclosure_attack_result=disclosure_attack_result)
 

@@ -14,7 +14,7 @@ def plot_time_to_deanonymize_vs_num_servers(
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     num_target_servers: int,
     num_servers_list: list[int],
-    diff_threshold: float,
+    stability_threshold: float,
     num_samples: int,
 ):
     log(
@@ -25,7 +25,7 @@ def plot_time_to_deanonymize_vs_num_servers(
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         num_target_servers=num_target_servers,
         num_servers_list=num_servers_list,
-        diff_threshold=diff_threshold,
+        stability_threshold=stability_threshold,
         num_samples=num_samples,
     )
 
@@ -50,7 +50,7 @@ def plot_time_to_deanonymize_vs_num_servers(
             idle_time_rv_for_target_client=idle_time_rv_for_target_client,
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             num_target_servers=num_target_servers,
-            diff_threshold=diff_threshold,
+            stability_threshold=stability_threshold,
             num_samples=num_samples,
         )
 

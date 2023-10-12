@@ -14,7 +14,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
     idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
     num_target_servers = 4
-    diff_threshold = 0.003
+    stability_threshold = 0.003
     num_samples = 1
 
     log(
@@ -24,7 +24,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
         idle_time_rv_for_target_client=idle_time_rv_for_target_client,
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         num_target_servers=num_target_servers,
-        diff_threshold=diff_threshold,
+        stability_threshold=stability_threshold,
         num_samples=num_samples,
     )
 
@@ -47,7 +47,7 @@ def test_plot_avg_time_to_deanonymize_vs_num_servers():
             idle_time_rv_for_target_client=idle_time_rv_for_target_client,
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             num_target_servers=num_target_servers,
-            diff_threshold=diff_threshold,
+            stability_threshold=stability_threshold,
             num_samples=num_samples,
         )
 

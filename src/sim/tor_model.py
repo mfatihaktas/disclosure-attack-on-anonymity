@@ -6,7 +6,7 @@ from src.attack import (
     adversary as adversary_module,
     disclosure_attack,
 )
-from src.debug_utils import check, DEBUG, INFO, log
+from src.debug_utils import check, DEBUG, ERROR, INFO, log
 from src.sim import message
 
 
@@ -109,7 +109,7 @@ def sim_w_disclosure_attack(
     num_target_servers: int,
     prob_target_server_recv: float,
     prob_non_target_server_recv: float,
-    diff_threshold: float,
+    stability_threshold: float,
     num_samples: int,
 ) -> disclosure_attack.DisclosureAttackResult:
     max_msg_delivery_time = 1
@@ -121,7 +121,7 @@ def sim_w_disclosure_attack(
         adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
-            diff_threshold=diff_threshold,
+            stability_threshold=stability_threshold,
         )
 
         tor = TorModel(
@@ -197,20 +197,29 @@ def sim_w_disclosure_attack_w_joblib(
     num_target_servers: int,
     prob_target_server_recv: float,
     prob_non_target_server_recv: float,
-    diff_threshold: float,
     num_samples: int,
+    **kwargs,
 ) -> disclosure_attack.DisclosureAttackResult:
     max_msg_delivery_time = 1
 
     def sim():
         env = simpy.Environment()
 
-        # adversary = disclosure_attack.DisclosureAttack(
-        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
-            env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
-            diff_threshold=diff_threshold,
-        )
+        if "stability_threshold" in kwargs:
+            adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
+                env=env,
+                max_msg_delivery_time=max_msg_delivery_time,
+                stability_threshold=kwargs["stability_threshold"],
+            )
+        elif "max_variance" in disclosure_attack_param_dict:
+            adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wBayesianEstimate(
+                env=env,
+                max_msg_delivery_time=max_msg_delivery_time,
+                max_variance=kwargs["max_variance"],
+            )
+        else:
+            log(ERROR, "", kwargs=kwargs)
+            raise ValueError("Unexpected kwargs")
 
         tor = TorModel(
             env=env,

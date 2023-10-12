@@ -127,7 +127,7 @@ def sim_w_disclosure_attack(
     idle_time_rv_for_target_client: random_variable.RandomVariable,
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     num_target_servers: int,
-    diff_threshold: float,
+    stability_threshold: float,
     num_samples: int,
 ) -> disclosure_attack.DisclosureAttackResult:
     def sim():
@@ -137,7 +137,7 @@ def sim_w_disclosure_attack(
         adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
             max_msg_delivery_time=network_delay_rv.max_value,
-            diff_threshold=diff_threshold,
+            stability_threshold=stability_threshold,
         )
 
         tor = TorSystem(
