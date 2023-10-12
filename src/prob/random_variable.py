@@ -65,7 +65,7 @@ class TruncatedNormal(RandomVariable):
     def mean(self) -> float:
         return self.dist.mean()
 
-    def std(self) -> float:
+    def stdev(self) -> float:
         return self.dist.std()
 
     def sample(self) -> float:
@@ -215,3 +215,32 @@ class BoundedZipf(RandomVariable):
 
     def sample(self) -> float:
         return self.dist.rvs(size=1)[0]
+
+
+class Beta(RandomVariable):
+    def __init__(self, a: float, b: float, D: float = 1):
+        super().__init__(min_value=0, max_value=D)
+
+        self.a = a
+        self.b = b
+        self.D = D
+
+        self.dist = scipy.stats.beta(a, b)
+
+    def __str__(self):
+        return f"{round(self.D, 2)} x Beta(a= {self.a}, b= {self.b})"
+
+    def to_latex(self):
+        return r"{} \times {}(a= {}, b= {})".format(self.D, r"\mathrm{Beta}", self.a, self.b)
+
+    def pdf(self, x: float):
+        return self.dist.pdf(x / self.D)
+
+    def mean(self) -> float:
+        return self.dist.mean() * self.D
+
+    def stdev(self) -> float:
+        return self.dist.std() * self.D
+
+    def sample(self) -> float:
+        return self.dist.rvs(size=1)[0] * self.D
