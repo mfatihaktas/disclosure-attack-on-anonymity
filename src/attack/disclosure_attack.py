@@ -222,9 +222,9 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
             error_percent=None,
         )
 
-        self.server_id_to_weight_map_for_baseline_inspection = collections.defaultdict(float)
-        self.server_id_avg_weight_diff_map = collections.defaultdict(float)
-        self.num_rounds_stationary = 0
+        self.server_id_to_baseline_weight_map = collections.defaultdict(float)
+        self.server_id_weight_diff_map = collections.defaultdict(float)
+
         self.baseline_inspection_process = env.process(self.baseline_inspection())
 
     def __repr__(self):
@@ -248,11 +248,11 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 continue
 
             for server_id in (
-                set(self.server_id_to_weight_map_for_baseline_inspection.keys())
+                set(self.server_id_to_baseline_weight_map.keys())
                 | sample_candidate_set
             ):
-                weight = self.server_id_to_weight_map_for_baseline_inspection[server_id]
-                self.server_id_to_weight_map_for_baseline_inspection[server_id] = (
+                weight = self.server_id_to_baseline_weight_map[server_id]
+                self.server_id_to_baseline_weight_map[server_id] = (
                     (
                         weight * num_sample_sets_collected
                         + int(server_id in sample_candidate_set)
@@ -266,7 +266,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
                 sample_candidate_set=sample_candidate_set,
                 num_sample_sets_collected=num_sample_sets_collected,
-                server_id_to_weight_map_for_baseline_inspection=self.server_id_to_weight_map_for_baseline_inspection,
+                server_id_to_baseline_weight_map=self.server_id_to_baseline_weight_map,
             )
             num_sample_sets_collected += 1
 
@@ -302,7 +302,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 INFO, self.env, self,
                 "completed attack",
                 target_server_id_set=self.target_server_id_set,
-                server_id_avg_weight_diff_map=self.server_id_avg_weight_diff_map,
+                server_id_weight_diff_map=self.server_id_weight_diff_map,
             )
             self.time_to_complete_attack = self.env.now
             self.attack_completed_event.succeed()
@@ -321,6 +321,8 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
         )
         self.diff_threshold = diff_threshold
 
+        self.num_rounds_stationary = 0
+
     def __repr__(self):
         return f"DisclosureAttack_wBaselineInspection_wStationaryRounds(diff_threshold= {self.diff_threshold})"
 
@@ -330,16 +332,16 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
 
         for server_id in (
             set(self.server_id_to_weight_map.keys())
-            | set(self.server_id_to_weight_map_for_baseline_inspection.keys())
+            | set(self.server_id_to_baseline_weight_map.keys())
         ):
-            avg_weight_diff = self.server_id_avg_weight_diff_map[server_id]
+            avg_weight_diff = self.server_id_weight_diff_map[server_id]
             weight_diff = (
                 self.server_id_to_weight_map[server_id]
-                - self.server_id_to_weight_map_for_baseline_inspection[server_id]
+                - self.server_id_to_baseline_weight_map[server_id]
             )
 
             diff = weight_diff - avg_weight_diff
-            self.server_id_avg_weight_diff_map[server_id] += 0.9 * diff
+            self.server_id_weight_diff_map[server_id] += 0.9 * diff
 
             if abs(diff) > self.diff_threshold:
                 self.num_rounds_stationary = 0
@@ -348,8 +350,8 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
         log(
             INFO, "",
             server_id_to_weight_map=self.server_id_to_weight_map,
-            server_id_to_weight_map_for_baseline_inspection=self.server_id_to_weight_map_for_baseline_inspection,
-            server_id_avg_weight_diff_map=self.server_id_avg_weight_diff_map,
+            server_id_to_baseline_weight_map=self.server_id_to_baseline_weight_map,
+            server_id_weight_diff_map=self.server_id_weight_diff_map,
             num_rounds_stationary=self.num_rounds_stationary,
         )
 
@@ -357,7 +359,7 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
             # Cluster the weight diffs
             data = [
                 [server_id, avg_weight_diff]
-                for server_id, avg_weight_diff in self.server_id_avg_weight_diff_map.items()
+                for server_id, avg_weight_diff in self.server_id_weight_diff_map.items()
             ]
             array = numpy.array([[row[1]] for row in data])
             centroids, labels, inertia = sklearn.cluster.k_means(array, 2)
@@ -387,6 +389,151 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
             )
 
         return None
+
+
+class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
+    def __init__(
+        self,
+        env: simpy.Environment,
+        max_msg_delivery_time: float,
+    ):
+        self.server_id_to_num_times_in_sample_set_map = collections.defaultdict(int)
+        self.server_id_to_num_in_baseline_sample_set_map = collections.defaultdict(int)
+
+        super().__init__(
+            env=env,
+            max_msg_delivery_time=max_msg_delivery_time,
+        )
+
+    def __repr__(self):
+        return "DisclosureAttack_wBaselineInspection_wBayesianEstimate"
+
+    def update(self, sample_candidate_set: set[str]):
+        slog(
+            DEBUG, self.env, self,
+            "started",
+            sample_candidate_set=sample_candidate_set,
+        )
+
+        for server_id in sample_candidate_set:
+            self.server_id_to_num_times_in_sample_set_map[server_id] += 1
+
+        self.num_sample_sets_collected += 1
+        log(
+            INFO, "updated",
+            num_sample_sets_collected=self.num_sample_sets_collected,
+            len_sample_candidate_set=len(sample_candidate_set),
+            # sample_candidate_set=sample_candidate_set,
+        )
+
+    def baseline_inspection(self):
+        interval_rv = random_variable.Exponential(mu=1)
+
+        num_msgs_recved_for_get_request = 1
+        num_sample_sets_collected = 0
+        while True:
+            interval = interval_rv.sample()
+            slog(DEBUG, self.env, self, "waiting", interval=interval)
+            yield self.env.timeout(interval)
+
+            sample_candidate_set = self.get_sample_candidate_set(
+                num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+            )
+            if not sample_candidate_set:
+                slog(DEBUG, self.env, self, "skipping empty sample_candidate_set")
+                continue
+
+            for server_id in sample_candidate_set:
+                self.server_id_to_num_in_baseline_sample_set_map[server_id] += 1
+
+            slog(
+                DEBUG, self.env, self,
+                "baseline inspection round",
+                num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+                sample_candidate_set=sample_candidate_set,
+                num_sample_sets_collected=num_sample_sets_collected,
+                server_id_to_num_in_baseline_sample_set_map=self.server_id_to_num_in_baseline_sample_set_map,
+            )
+            num_sample_sets_collected += 1
+
+    def get_server_id_to_p_rv(self) -> dict[str, random_variable.RandomVariable]:
+        return {
+            random_variable.Beta(
+                a=num_times_in_sample_set,
+                b=self.num_sample_sets_collected - num_times_in_sample_set
+            )
+            for server_id, num_times_in_sample_set in self.server_id_to_num_times_in_sample_set_map.items()
+        }
+
+    def get_server_id_to_p_baseline_rv(self) -> dict[str, random_variable.RandomVariable]:
+        return {
+            random_variable.Beta(
+                a=num_times_in_sample_set,
+                b=self.num_sample_sets_collected - num_times_in_sample_set
+            )
+            for server_id, num_times_in_sample_set in self.server_id_to_num_in_baseline_sample_set_map.items()
+        }
+
+    def check_if_attack_completed(self) -> Optional[set[str]]:
+        if self.num_sample_sets_collected < 10:
+            return None
+
+        server_id_to_p_rv = self.get_server_id_to_p_rv()
+        server_id_to_p_baseline_rv = self.get_server_id_to_p_baseline_rv()
+
+        for server_id in (
+            set(server_id_to_p_rv.keys())
+            | set(server_id_to_p_baseline_rv.keys())
+        ):
+            coeff_of_variation = server_id_to_p_rv.stdev()
+            coeff_of_variation_baseline = server_id_to_p_baseline_rv.stdev()
+
+            log(
+                INFO, "",
+                coeff_of_variation=coeff_of_variation,
+                coeff_of_variation_baseline=coeff_of_variation_baseline,
+            )
+
+            if (
+                coeff_of_variation > self.max_variance
+                or coeff_of_variation_baseline > self.max_variance
+            ):
+                return None
+
+        # Cluster the diffs
+        data = [
+            [
+                server_id,
+                p_rv.mean() - server_id_to_p_baseline_rv[server_id]
+            ]
+            for server_id, p_rv in self.server_id_to_p_rv.items()
+        ]
+        array = numpy.array([[row[1]] for row in data])
+        centroids, labels, inertia = sklearn.cluster.k_means(array, 2)
+        log(
+            DEBUG, "",
+            centroids=centroids,
+            labels=labels,
+            inertia=inertia,
+        )
+
+        # Find `label_for_target_servers`
+        centroid_and_label_list_sorted = sorted(
+            [
+                (centroids[label].item(), label)
+                for label in range(2)
+            ]
+        )
+        log(INFO, "", centroid_and_label_list_sorted=centroid_and_label_list_sorted)
+
+        label_for_target_servers = centroid_and_label_list_sorted[1][1]
+
+        # Return the set of target server ids
+        return set(
+            data[i][0]
+            for i in range(len(data))
+            if labels[i] == label_for_target_servers
+        )
 
 
 @dataclasses.dataclass
