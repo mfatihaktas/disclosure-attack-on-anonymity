@@ -571,3 +571,9 @@ class DisclosureAttackResult:
     num_rounds_list: list[int]
     target_server_set_accuracy: float
     classification_result_list: list[ClassificationResult]
+
+
+@dataclasses.dataclass
+class DisclosureAttackResult_wSignalSampleStrength(DisclosureAttackResult):
+    signal_strength_for_target_server_list: list[float]
+    signal_strength_for_non_target_server_list: list[float]

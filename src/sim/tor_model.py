@@ -103,94 +103,6 @@ class TorModel():
         log(DEBUG, "Done")
 
 
-def sim_w_disclosure_attack(
-    num_clients: int,
-    num_servers: int,
-    num_target_servers: int,
-    prob_target_server_recv: float,
-    prob_non_target_server_recv: float,
-    stability_threshold: float,
-    num_samples: int,
-) -> disclosure_attack.DisclosureAttackResult:
-    max_msg_delivery_time = 1
-
-    def sim():
-        env = simpy.Environment()
-
-        # adversary = disclosure_attack.DisclosureAttack(
-        adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
-            env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
-            stability_threshold=stability_threshold,
-        )
-
-        tor = TorModel(
-            env=env,
-            num_clients=num_clients,
-            num_servers=num_servers,
-            num_target_servers=num_target_servers,
-            max_msg_delivery_time=max_msg_delivery_time,
-            prob_target_server_recv=prob_target_server_recv,
-            prob_non_target_server_recv=prob_non_target_server_recv,
-        )
-
-        tor.register_adversary(adversary=adversary)
-        tor.run()
-
-        return (
-            tor.get_target_server_ids(),
-            tor.get_attack_completion_time(),
-            tor.get_num_rounds()
-        )
-
-    true_target_server_id_set = set(
-        f"s{server_id}" for server_id in range(num_target_servers)
-    )
-    # log(WARNING, "", true_target_server_id_set=true_target_server_id_set)
-
-    time_to_deanonymize_list = []
-    num_rounds_list = []
-    num_correct_target_server_sets = 0
-    classification_result_list = []
-    for _ in range(num_samples):
-        target_server_id_set, time_to_deanonymize, num_rounds = sim()
-        log(
-            INFO, "",
-            target_server_id_set=target_server_id_set,
-            time_to_deanonymize=time_to_deanonymize,
-            num_rounds=num_rounds,
-        )
-
-        time_to_deanonymize_list.append(time_to_deanonymize)
-        num_rounds_list.append(num_rounds)
-
-        num_correct_target_server_sets += int(true_target_server_id_set == target_server_id_set)
-
-        # Append `classification_result`
-        num_targets_identified_as_target = 0
-        num_non_targets_identified_as_target = 0
-        for target_server_id in target_server_id_set:
-            if target_server_id in true_target_server_id_set:
-                num_targets_identified_as_target += 1
-            else:
-                num_non_targets_identified_as_target += 1
-
-        classification_result = disclosure_attack.ClassificationResult(
-            num_targets_identified_as_target=num_targets_identified_as_target,
-            num_targets_identified_as_non_target=num_target_servers - num_targets_identified_as_target,
-            num_non_targets_identified_as_target=num_non_targets_identified_as_target,
-            num_non_targets_identified_as_non_target=num_servers - num_target_servers - num_non_targets_identified_as_target,
-        )
-        classification_result_list.append(classification_result)
-
-    return disclosure_attack.DisclosureAttackResult(
-        time_to_deanonymize_list=time_to_deanonymize_list,
-        num_rounds_list=num_rounds_list,
-        target_server_set_accuracy=num_correct_target_server_sets / num_samples,
-        classification_result_list=classification_result_list,
-    )
-
-
 def sim_w_disclosure_attack_w_joblib(
     num_clients: int,
     num_servers: int,
@@ -211,7 +123,7 @@ def sim_w_disclosure_attack_w_joblib(
                 max_msg_delivery_time=max_msg_delivery_time,
                 stability_threshold=kwargs["stability_threshold"],
             )
-        elif "max_variance" in disclosure_attack_param_dict:
+        elif "max_variance" in kwargs:
             adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wBayesianEstimate(
                 env=env,
                 max_msg_delivery_time=max_msg_delivery_time,
@@ -234,11 +146,15 @@ def sim_w_disclosure_attack_w_joblib(
         tor.register_adversary(adversary=adversary)
         tor.run()
 
-        return (
+        result_list = [
             tor.get_target_server_ids(),
             tor.get_attack_completion_time(),
-            tor.get_num_rounds()
-        )
+            tor.get_num_rounds(),
+        ]
+        if isinstance(adversary, disclosure_attack.DisclosureAttack_wBaselineInspection_wBayesianEstimate):
+            result_list.append(adversary.server_id_to_signal_map)
+
+        return result_list
 
     true_target_server_id_set = set(
         f"s{server_id}" for server_id in range(num_target_servers)
@@ -257,7 +173,9 @@ def sim_w_disclosure_attack_w_joblib(
     num_correct_target_server_sets = 0
     classification_result_list = []
     for sim_result in sim_result_list:
-        target_server_id_set, time_to_deanonymize, num_rounds = sim_result
+        target_server_id_set = sim_result[0]
+        time_to_deanonymize = sim_result[1]
+        num_rounds = sim_result[2]
         log(
             INFO, "",
             target_server_id_set=target_server_id_set,
@@ -287,9 +205,39 @@ def sim_w_disclosure_attack_w_joblib(
         )
         classification_result_list.append(classification_result)
 
-    return disclosure_attack.DisclosureAttackResult(
-        time_to_deanonymize_list=time_to_deanonymize_list,
-        num_rounds_list=num_rounds_list,
-        target_server_set_accuracy=num_correct_target_server_sets / num_samples,
-        classification_result_list=classification_result_list,
-    )
+    target_server_set_accuracy = num_correct_target_server_sets / num_samples
+    if "stability_threshold" in kwargs:
+        return disclosure_attack.DisclosureAttackResult(
+            time_to_deanonymize_list=time_to_deanonymize_list,
+            num_rounds_list=num_rounds_list,
+            target_server_set_accuracy=target_server_set_accuracy,
+            classification_result_list=classification_result_list,
+        )
+
+    elif "max_variance" in kwargs:
+        signal_strength_for_target_server_list = []
+        signal_strength_for_non_target_server_list = []
+        for sim_result in sim_result_list:
+            server_id_to_signal_map = sim_result[3]
+
+            signal_strength_for_target_server_list.extend(
+                [
+                    server_id_to_signal_map[server_id]
+                    for server_id in num_target_servers
+                ]
+            )
+            signal_strength_for_non_target_server_list.extend(
+                [
+                    server_id_to_signal_map[server_id]
+                    for server_id in range(num_target_servers, num_servers)
+                ]
+            )
+
+        return disclosure_attack.DisclosureAttackResult_wSignalSampleStrength(
+            time_to_deanonymize_list=time_to_deanonymize_list,
+            num_rounds_list=num_rounds_list,
+            target_server_set_accuracy=target_server_set_accuracy,
+            classification_result_list=classification_result_list,
+            signal_strength_for_target_server_list=signal_strength_for_target_server_list,
+            signal_strength_for_non_target_server_list=signal_strength_for_non_target_server_list,
+        )
