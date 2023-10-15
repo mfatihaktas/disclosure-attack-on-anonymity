@@ -2,6 +2,7 @@ import joblib
 import random
 import simpy
 
+from src import utils
 from src.attack import (
     adversary as adversary_module,
     disclosure_attack,
@@ -73,7 +74,7 @@ class TorModel():
                     self.prob_non_target_server_recv
                 )
                 if random.random() <= p:
-                    server_id_list.append(f"s{server_rank}")
+                    server_id_list.append(utils.get_server_id(server_rank))
 
             # Generate "server received" events.
             for server_id in server_id_list:
@@ -123,11 +124,11 @@ def sim_w_disclosure_attack_w_joblib(
                 max_msg_delivery_time=max_msg_delivery_time,
                 stability_threshold=kwargs["stability_threshold"],
             )
-        elif "max_variance" in kwargs:
+        elif "max_stdev" in kwargs:
             adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wBayesianEstimate(
                 env=env,
                 max_msg_delivery_time=max_msg_delivery_time,
-                max_variance=kwargs["max_variance"],
+                max_stdev=kwargs["max_stdev"],
             )
         else:
             log(ERROR, "", kwargs=kwargs)
@@ -157,7 +158,7 @@ def sim_w_disclosure_attack_w_joblib(
         return result_list
 
     true_target_server_id_set = set(
-        f"s{server_id}" for server_id in range(num_target_servers)
+        f"{utils.get_server_id(server_rank)}" for server_rank in range(num_target_servers)
     )
     # log(WARNING, "", true_target_server_id_set=true_target_server_id_set)
 
@@ -214,22 +215,23 @@ def sim_w_disclosure_attack_w_joblib(
             classification_result_list=classification_result_list,
         )
 
-    elif "max_variance" in kwargs:
+    elif "max_stdev" in kwargs:
         signal_strength_for_target_server_list = []
         signal_strength_for_non_target_server_list = []
         for sim_result in sim_result_list:
             server_id_to_signal_map = sim_result[3]
+            log(INFO, "", server_id_to_signal_map=server_id_to_signal_map)
 
             signal_strength_for_target_server_list.extend(
                 [
-                    server_id_to_signal_map[server_id]
-                    for server_id in num_target_servers
+                    server_id_to_signal_map[utils.get_server_id(server_rank)]
+                    for server_rank in range(num_target_servers)
                 ]
             )
             signal_strength_for_non_target_server_list.extend(
                 [
-                    server_id_to_signal_map[server_id]
-                    for server_id in range(num_target_servers, num_servers)
+                    server_id_to_signal_map[utils.get_server_id(server_rank)]
+                    for server_rank in range(num_target_servers, num_servers)
                 ]
             )
 

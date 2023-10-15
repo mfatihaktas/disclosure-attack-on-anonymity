@@ -1,5 +1,6 @@
 import simpy
 
+from src import utils
 from src.attack import (
     adversary as adversary_module,
     disclosure_attack,
@@ -44,10 +45,10 @@ class TorSystem():
 
         # Servers
         self.server_list = []
-        for i in range(num_servers):
+        for server_rank in range(num_servers):
             server = server_module.Server(
                 env=self.env,
-                _id=f"s{i}",
+                _id=f"{utils.get_server_id(server_rank)}",
             )
             server.next_hop = self.network
             self.server_list.append(server)
@@ -161,7 +162,7 @@ def sim_w_disclosure_attack(
         )
 
     true_target_server_id_set = set(
-        f"s{server_id}" for server_id in range(num_target_servers)
+        f"{utils.get_server_id(server_rank)}" for server_rank in range(num_target_servers)
     )
     # log(WARNING, "", true_target_server_id_set=true_target_server_id_set)
 

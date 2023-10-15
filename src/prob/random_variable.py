@@ -227,7 +227,7 @@ class Beta(RandomVariable):
 
         self.dist = scipy.stats.beta(a, b)
 
-    def __str__(self):
+    def __repr__(self):
         return f"{round(self.D, 2)} x Beta(a= {self.a}, b= {self.b})"
 
     def to_latex(self):
@@ -241,6 +241,13 @@ class Beta(RandomVariable):
 
     def stdev(self) -> float:
         return self.dist.std() * self.D
+
+    def coeff_of_variation(self) -> float:
+        mean = self.mean()
+        if mean == 0:
+            return numpy.nan
+
+        return self.stdev() / mean
 
     def sample(self) -> float:
         return self.dist.rvs(size=1)[0] * self.D

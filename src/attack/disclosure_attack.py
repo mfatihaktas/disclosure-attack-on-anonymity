@@ -396,7 +396,7 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
         self,
         env: simpy.Environment,
         max_msg_delivery_time: float,
-        max_variance: float,
+        max_stdev: float,
     ):
         self.server_id_to_num_times_in_sample_set_map = collections.defaultdict(int)
         self.server_id_to_num_in_baseline_sample_set_map = collections.defaultdict(int)
@@ -405,7 +405,7 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
         )
-        self.max_variance = max_variance
+        self.max_stdev = max_stdev
 
         self.server_id_to_signal_map = None
 
@@ -460,20 +460,26 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             )
             num_sample_sets_collected += 1
 
-    def get_server_id_to_p_rv(self) -> dict[str, random_variable.RandomVariable]:
+    def get_server_id_to_p_rv_map(self) -> dict[str, random_variable.RandomVariable]:
+        log(
+            INFO, "",
+            server_id_to_num_times_in_sample_set_map=self.server_id_to_num_times_in_sample_set_map,
+            num_sample_sets_collected=self.num_sample_sets_collected,
+        )
+
         return {
-            random_variable.Beta(
-                a=num_times_in_sample_set,
-                b=self.num_sample_sets_collected - num_times_in_sample_set
+            server_id: random_variable.Beta(
+                a=num_times_in_sample_set + 1,
+                b=self.num_sample_sets_collected - num_times_in_sample_set + 1
             )
             for server_id, num_times_in_sample_set in self.server_id_to_num_times_in_sample_set_map.items()
         }
 
-    def get_server_id_to_p_baseline_rv(self) -> dict[str, random_variable.RandomVariable]:
+    def get_server_id_to_p_baseline_rv_map(self) -> dict[str, random_variable.RandomVariable]:
         return {
-            random_variable.Beta(
-                a=num_times_in_sample_set,
-                b=self.num_sample_sets_collected - num_times_in_sample_set
+            server_id: random_variable.Beta(
+                a=num_times_in_sample_set + 1,
+                b=self.num_sample_sets_collected - num_times_in_sample_set + 1
             )
             for server_id, num_times_in_sample_set in self.server_id_to_num_in_baseline_sample_set_map.items()
         }
@@ -482,32 +488,38 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
         if self.num_sample_sets_collected < 10:
             return None
 
-        server_id_to_p_rv = self.get_server_id_to_p_rv()
-        server_id_to_p_baseline_rv = self.get_server_id_to_p_baseline_rv()
+        server_id_to_p_rv_map = self.get_server_id_to_p_rv_map()
+        server_id_to_p_baseline_rv_map = self.get_server_id_to_p_baseline_rv_map()
+        log(
+            INFO, "",
+            server_id_to_p_rv_map=server_id_to_p_rv_map,
+            server_id_to_p_baseline_rv_map=server_id_to_p_baseline_rv_map,
+        )
 
         for server_id in (
-            set(server_id_to_p_rv.keys())
-            | set(server_id_to_p_baseline_rv.keys())
+            set(server_id_to_p_rv_map.keys())
+            | set(server_id_to_p_baseline_rv_map.keys())
         ):
-            coeff_of_variation = server_id_to_p_rv.stdev()
-            coeff_of_variation_baseline = server_id_to_p_baseline_rv.stdev()
-
+            stdev = server_id_to_p_rv_map[server_id].stdev() if server_id in server_id_to_p_rv_map else float("Inf")
+            stdev_baseline = server_id_to_p_baseline_rv_map[server_id].stdev() if server_id in server_id_to_p_rv_map else float("Inf")
             log(
-                INFO, "",
-                coeff_of_variation=coeff_of_variation,
-                coeff_of_variation_baseline=coeff_of_variation_baseline,
+                INFO, f"> server_id= {server_id}",
+                stdev=stdev,
+                stdev_baseline=stdev_baseline,
             )
 
             if (
-                coeff_of_variation > self.max_variance
-                or coeff_of_variation_baseline > self.max_variance
+                stdev is None or numpy.isnan(stdev)
+                or stdev_baseline is None or numpy.isnan(stdev_baseline)
+                or stdev > self.max_stdev
+                or stdev_baseline > self.max_stdev
             ):
                 return None
 
         # Record the "signal" in the estimates available for detection
         self.server_id_to_signal_map = {
-            server_id: p_rv.mean() - server_id_to_p_baseline_rv[server_id].mean()
-            for server_id, p_rv in self.server_id_to_p_rv.items()
+            server_id: p_rv.mean() - server_id_to_p_baseline_rv_map[server_id].mean()
+            for server_id, p_rv in server_id_to_p_rv_map.items()
         }
 
         # Cluster the diffs
