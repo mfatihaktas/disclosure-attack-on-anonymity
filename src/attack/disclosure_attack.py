@@ -225,6 +225,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         self.server_id_to_baseline_weight_map = collections.defaultdict(float)
         self.server_id_weight_diff_map = collections.defaultdict(float)
 
+        self.num_baseline_sample_sets_collected = 0
         self.baseline_inspection_process = env.process(self.baseline_inspection())
 
     def __repr__(self):
@@ -234,7 +235,6 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         interval_rv = random_variable.Exponential(mu=1)
 
         num_msgs_recved_for_get_request = 1
-        num_sample_sets_collected = 0
         while True:
             interval = interval_rv.sample()
             slog(DEBUG, self.env, self, "waiting", interval=interval)
@@ -254,10 +254,10 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 weight = self.server_id_to_baseline_weight_map[server_id]
                 self.server_id_to_baseline_weight_map[server_id] = (
                     (
-                        weight * num_sample_sets_collected
+                        weight * self.num_baseline_sample_sets_collected
                         + int(server_id in sample_candidate_set)
                     )
-                    / (num_sample_sets_collected + 1)
+                    / (self.num_baseline_sample_sets_collected + 1)
                 )
 
             slog(
@@ -265,10 +265,10 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 "baseline inspection round",
                 num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
                 sample_candidate_set=sample_candidate_set,
-                num_sample_sets_collected=num_sample_sets_collected,
+                num_baseline_sample_sets_collected=self.num_baseline_sample_sets_collected,
                 server_id_to_baseline_weight_map=self.server_id_to_baseline_weight_map,
             )
-            num_sample_sets_collected += 1
+            self.num_baseline_sample_sets_collected += 1
 
     def client_completed_get_request(
         self,
@@ -434,7 +434,6 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
         interval_rv = random_variable.Exponential(mu=1)
 
         num_msgs_recved_for_get_request = 1
-        num_sample_sets_collected = 0
         while True:
             interval = interval_rv.sample()
             slog(DEBUG, self.env, self, "waiting", interval=interval)
@@ -455,14 +454,14 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
                 "baseline inspection round",
                 num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
                 sample_candidate_set=sample_candidate_set,
-                num_sample_sets_collected=num_sample_sets_collected,
+                num_baseline_sample_sets_collected=self.num_baseline_sample_sets_collected,
                 server_id_to_num_in_baseline_sample_set_map=self.server_id_to_num_in_baseline_sample_set_map,
             )
-            num_sample_sets_collected += 1
+            self.num_baseline_sample_sets_collected += 1
 
     def get_server_id_to_p_rv_map(self) -> dict[str, random_variable.RandomVariable]:
         log(
-            INFO, "",
+            DEBUG, "",
             server_id_to_num_times_in_sample_set_map=self.server_id_to_num_times_in_sample_set_map,
             num_sample_sets_collected=self.num_sample_sets_collected,
         )
@@ -476,10 +475,16 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
         }
 
     def get_server_id_to_p_baseline_rv_map(self) -> dict[str, random_variable.RandomVariable]:
+        log(
+            DEBUG, "",
+            server_id_to_num_in_baseline_sample_set_map=self.server_id_to_num_in_baseline_sample_set_map,
+            num_baseline_sample_sets_collected=self.num_baseline_sample_sets_collected,
+        )
+
         return {
             server_id: random_variable.Beta(
                 a=num_times_in_sample_set + 1,
-                b=self.num_sample_sets_collected - num_times_in_sample_set + 1
+                b=self.num_baseline_sample_sets_collected - num_times_in_sample_set + 1
             )
             for server_id, num_times_in_sample_set in self.server_id_to_num_in_baseline_sample_set_map.items()
         }
@@ -501,7 +506,7 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             | set(server_id_to_p_baseline_rv_map.keys())
         ):
             stdev = server_id_to_p_rv_map[server_id].stdev() if server_id in server_id_to_p_rv_map else float("Inf")
-            stdev_baseline = server_id_to_p_baseline_rv_map[server_id].stdev() if server_id in server_id_to_p_rv_map else float("Inf")
+            stdev_baseline = server_id_to_p_baseline_rv_map[server_id].stdev() if server_id in server_id_to_p_baseline_rv_map else float("Inf")
             log(
                 INFO, f"> server_id= {server_id}",
                 stdev=stdev,

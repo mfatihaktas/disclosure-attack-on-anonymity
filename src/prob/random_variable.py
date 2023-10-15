@@ -228,7 +228,8 @@ class Beta(RandomVariable):
         self.dist = scipy.stats.beta(a, b)
 
     def __repr__(self):
-        return f"{round(self.D, 2)} x Beta(a= {self.a}, b= {self.b})"
+        # return f"{round(self.D, 2)} x Beta(a= {self.a}, b= {self.b})"
+        return f"Beta(a= {self.a}, b= {self.b})"
 
     def to_latex(self):
         return r"{} \times {}(a= {}, b= {})".format(self.D, r"\mathrm{Beta}", self.a, self.b)
