@@ -61,7 +61,7 @@ def plot_time_to_deanonymize_vs_num_servers(
         "plot_time_to_deanon_vs_num_servers"
         f"_ntarget_{num_target_servers}"
         f"_pserver_{prob_server_recv}"
-        f"_pnontarget_{prob_client_active_given_target_server_recved}"
+        f"_pclient_{prob_client_active_given_target_server_recved}"
         f"_num_samples_{num_samples}"
     )
     plot.savefig(f"plots/{plot_name}.pdf", bbox_inches="tight")
