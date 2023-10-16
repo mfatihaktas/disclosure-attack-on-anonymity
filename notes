@@ -1,0 +1,45 @@
+> Definitions
+
+S_i := Server-i
+
+S_1, ..., S_t are target servers.
+
+R_i := {S_i receives}
+R_i_c := {S_i receives from target client}
+R := {At least one target server receives}
+
+A := {Attack round for the target client}
+
+Pr{R_i | A} = Pr{A | R_i} * Pr{R_i} / Pr{A}
+
+# Pr{A | R} = 1 - Pr{A | R_1', ..., R_t'}
+
+> Scenario 1:
+- The process consists of rounds.
+- At each round, each server receives from non-target clients w.p. p_s.
+- At each round, target client sends w.p. p_c, i.e., Pr{A} = p_c
+
+Then,
+Pr{R_i} = Pr{R_i | A} * Pr{A} + Pr{R_i | A'} * Pr{A'}  (1)
+where
+Pr{R_i | A}
+= Pr{R_i, R_i_c | A} + Pr{R_i, R_i_c' | A}
+= Pr{R_i | R_i_c, A} * Pr{R_i_c | A} + Pr{R_i | R_i_c', A} * Pr{R_i_c' | A}
+# [Pr{R_i | R_i_c, A} = 1, Pr{R_i | R_i_c', A}] = p_s
+= Pr{R_i_c | A} + p_s * (1 - Pr{R_i_c | A})
+= 1/t + p_s * (1 - 1/t)
+
+Pr{R_i | A'}
+= Pr{R_i, R_i_c | A'} + Pr{R_i, R_i_c' | A'}
+= Pr{R_i | R_i_c, A'} * Pr{R_i_c | A'} + Pr{R_i | R_i_c', A'}
+# [Pr{R_i | R_i_c, A'} = 1, Pr{R_i_c | A'} = 0, Pr{R_i | R_i_c', A'}] = p_s, Pr{R_i_c' | A'} = 1
+= p_s  (obviously)
+
+Substituting these in (1)
+Pr{R_i} = (1/t + p_s * (1 - 1/t)) * p_c + p_s * (1 - p_c)
+
+Notice that
+Pr{R_i | A} > p_s
+thus
+Pr{R_i | A} > Pr{R_i}
+as expected.
