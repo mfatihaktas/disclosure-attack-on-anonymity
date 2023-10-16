@@ -466,6 +466,7 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             num_sample_sets_collected=self.num_sample_sets_collected,
         )
 
+        # Note: `+ 1` is necessary to avoid getting nan values from Beta.stdev().
         return {
             server_id: random_variable.Beta(
                 a=num_times_in_sample_set + 1,
