@@ -8,8 +8,8 @@ from src.sim import tor_model as tor_model_module
 def get_results_to_plot_w_model(
     num_target_servers: int,
     num_servers_list: list[int],
-    prob_server_recv: float,
-    prob_client_active_given_target_server_recved: float,
+    prob_server_active: float,
+    prob_attack_round: float,
     num_samples: int,
     **kwargs,
 ):
@@ -17,8 +17,8 @@ def get_results_to_plot_w_model(
         INFO, "Started",
         num_target_servers=num_target_servers,
         num_servers_list=num_servers_list,
-        prob_server_recv=prob_server_recv,
-        prob_client_active_given_target_server_recved=prob_client_active_given_target_server_recved,
+        prob_server_active=prob_server_active,
+        prob_attack_round=prob_attack_round,
         num_samples=num_samples,
         kwargs=kwargs,
     )
@@ -39,8 +39,8 @@ def get_results_to_plot_w_model(
             num_clients=num_clients,
             num_servers=num_servers,
             num_target_servers=num_target_servers,
-            prob_server_recv=prob_server_recv,
-            prob_client_active_given_target_server_recved=prob_client_active_given_target_server_recved,
+            prob_server_active=prob_server_active,
+            prob_attack_round=prob_attack_round,
             num_samples=num_samples,
             **kwargs,
         )

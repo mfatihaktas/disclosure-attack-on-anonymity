@@ -7,16 +7,16 @@ from src.plot_utils import NICE_BLUE, NICE_ORANGE, NICE_RED, plot
 def plot_time_to_deanonymize_vs_num_servers(
     num_target_servers: int,
     num_servers_list: list[int],
-    prob_server_recv: float,
-    prob_client_active_given_target_server_recved: float,
+    prob_server_active: float,
+    prob_attack_round: float,
     num_samples: int,
     **kwargs,
 ):
     results_dict = utils.get_results_to_plot_w_model(
         num_target_servers=num_target_servers,
         num_servers_list=num_servers_list,
-        prob_server_recv=prob_server_recv,
-        prob_client_active_given_target_server_recved=prob_client_active_given_target_server_recved,
+        prob_server_active=prob_server_active,
+        prob_attack_round=prob_attack_round,
         num_samples=num_samples,
         **kwargs,
     )
@@ -48,8 +48,8 @@ def plot_time_to_deanonymize_vs_num_servers(
 
     title = (
         r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
-        r"$p_{\mathrm{server}} =$" + fr"${prob_server_recv}$, "
-        r"$p_{\mathrm{client}} =$" + fr"${prob_client_active_given_target_server_recved}$, "
+        r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
+        r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
         r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
     )
     plot.suptitle(title, fontsize=fontsize)
@@ -60,8 +60,8 @@ def plot_time_to_deanonymize_vs_num_servers(
     plot_name = (
         "plot_time_to_deanon_vs_num_servers"
         f"_ntarget_{num_target_servers}"
-        f"_pserver_{prob_server_recv}"
-        f"_pclient_{prob_client_active_given_target_server_recved}"
+        f"_pserver_{prob_server_active}"
+        f"_pclient_{prob_attack_round}"
         f"_num_samples_{num_samples}"
     )
     plot.savefig(f"plots/{plot_name}.pdf", bbox_inches="tight")

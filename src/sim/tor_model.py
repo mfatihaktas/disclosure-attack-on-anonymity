@@ -19,8 +19,8 @@ class TorModel():
         num_servers: int,
         num_target_servers: int,
         max_msg_delivery_time: float,
-        prob_server_recv: float,
-        prob_client_active_given_target_server_recved: float,
+        prob_server_active: float,
+        prob_attack_round: float,
     ):
         check(num_target_servers <= num_servers, "")
 
@@ -29,8 +29,8 @@ class TorModel():
         self.num_servers = num_servers
         self.num_target_servers = num_target_servers
         self.max_msg_delivery_time = max_msg_delivery_time
-        self.prob_server_recv = prob_server_recv
-        self.prob_client_active_given_target_server_recved = prob_client_active_given_target_server_recved
+        self.prob_server_active = prob_server_active
+        self.prob_attack_round = prob_attack_round
 
         self.generate_model_events_process = env.process(self.generate_model_events())
 
@@ -41,8 +41,8 @@ class TorModel():
             f"\t num_servers= {self.num_servers} \n"
             f"\t num_target_servers= {self.num_target_servers} \n"
             f"\t max_msg_delivery_time= {self.max_msg_delivery_time} \n"
-            f"\t prob_server_recv= {self.prob_server_recv} \n"
-            f"\t prob_client_active_given_target_server_recved= {self.prob_client_active_given_target_server_recved} \n"
+            f"\t prob_server_active= {self.prob_server_active} \n"
+            f"\t prob_attack_round= {self.prob_attack_round} \n"
             ")"
         )
 
@@ -69,7 +69,7 @@ class TorModel():
             server_id_set = {
                 utils.get_server_id(server_rank)
                 for server_rank in range(self.num_servers)
-                if random.random() <= self.prob_server_recv
+                if random.random() <= self.prob_server_active
             }
 
             # Generate "server received" events.
@@ -82,18 +82,22 @@ class TorModel():
                 )
                 self.adversary.server_sent_msg(msg=msg)
 
-            # Generate "client completed request" event.
             yield self.env.timeout(0.1 * self.max_msg_delivery_time)
 
-            for target_server_rank in range(self.num_target_servers):
-                if (
-                    utils.get_server_id(target_server_rank) in server_id_set
-                    and random.random() <= self.prob_client_active_given_target_server_recved
-                ):
-                    self.adversary.client_completed_get_request(
-                        num_msgs_recved_for_get_request=1,
-                    )
-                    break
+            # Generate "client completed request" event.
+            if random.random() <= self.prob_attack_round:
+                target_server_id = random.randint(0, self.num_target_servers - 1)
+                msg = message.Message(
+                    _id=f"{msg_count}",
+                    _type=None,
+                    src_id=target_server_id,
+                    dst_id=target_client_id,
+                )
+                self.adversary.server_sent_msg(msg=msg)
+
+                self.adversary.client_completed_get_request(
+                    num_msgs_recved_for_get_request=1,
+                )
 
             # Wait long enough for the next round.
             yield self.env.timeout(2 * self.max_msg_delivery_time)
@@ -110,8 +114,8 @@ def sim_w_disclosure_attack_w_joblib(
     num_clients: int,
     num_servers: int,
     num_target_servers: int,
-    prob_server_recv: float,
-    prob_client_active_given_target_server_recved: float,
+    prob_server_active: float,
+    prob_attack_round: float,
     num_samples: int,
     **kwargs,
 ) -> disclosure_attack.DisclosureAttackResult:
@@ -142,8 +146,8 @@ def sim_w_disclosure_attack_w_joblib(
             num_servers=num_servers,
             num_target_servers=num_target_servers,
             max_msg_delivery_time=max_msg_delivery_time,
-            prob_server_recv=prob_server_recv,
-            prob_client_active_given_target_server_recved=prob_client_active_given_target_server_recved,
+            prob_server_active=prob_server_active,
+            prob_attack_round=prob_attack_round,
         )
 
         tor.register_adversary(adversary=adversary)
