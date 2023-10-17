@@ -11,7 +11,7 @@ from src.debug_utils import check, DEBUG, ERROR, INFO, log
 from src.sim import message
 
 
-class TorModel():
+class TorModel_wRounds:
     def __init__(
         self,
         env: simpy.Environment,
@@ -36,7 +36,7 @@ class TorModel():
 
     def __repr__(self):
         return (
-            "TorModel( \n"
+            "TorModel_wRounds( \n"
             f"\t num_clients= {self.num_clients} \n"
             f"\t num_servers= {self.num_servers} \n"
             f"\t num_target_servers= {self.num_target_servers} \n"
@@ -140,7 +140,7 @@ def sim_w_disclosure_attack_w_joblib(
             log(ERROR, "", kwargs=kwargs)
             raise ValueError("Unexpected kwargs")
 
-        tor = TorModel(
+        tor = TorModel_wRounds(
             env=env,
             num_clients=num_clients,
             num_servers=num_servers,
