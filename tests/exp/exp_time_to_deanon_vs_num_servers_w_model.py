@@ -24,7 +24,7 @@ if __name__ == "__main__":
     #     stability_threshold=stability_threshold,
     # )
 
-    max_stdev = 0.1
+    max_stdev = 0.05
     plot_w_model.plot_time_to_deanonymize_vs_num_servers(
         num_target_servers=num_target_servers,
         num_servers_list=num_servers_list,

@@ -1,11 +1,11 @@
 > Definitions
 
-S_i := Server-i
+s_i := Server-i
 
-S_1, ..., S_t are target servers.
+s_1, ..., s_t are target servers.
 
-R_i := {S_i receives}
-R_i_c := {S_i receives from target client}
+R_i := {s_i receives}
+R_i_c := {s_i receives from target client}
 R := {At least one target server receives}
 
 A := {Attack round for the target client}
@@ -14,7 +14,7 @@ Pr{R_i | A} = Pr{A | R_i} * Pr{R_i} / Pr{A}
 
 # Pr{A | R} = 1 - Pr{A | R_1', ..., R_t'}
 
-> Scenario 1:
+>>> Scenario 1:
 - The process consists of rounds.
 - At each round, each server receives from non-target clients w.p. p_s.
 - At each round, target client sends w.p. p_c, i.e., Pr{A} = p_c
@@ -38,8 +38,22 @@ Pr{R_i | A'}
 Substituting these in (1)
 Pr{R_i} = (1/t + p_s * (1 - 1/t)) * p_c + p_s * (1 - p_c)
 
-Notice that
+*** Notice that
 Pr{R_i | A} > p_s
 thus
 Pr{R_i | A} > Pr{R_i}
 as expected.
+
+
+>>> Practical disclosure attack
+Adversary collects sample sets and estimates Pr{R_i | A} and Pr{R_i} as follows:
+Pr^{R_i | A} = # sample sets containing s_i / # sample sets
+Pr^{R_i} = # baseline sample sets containing s_i / # baseline sample sets
+
+Given that we collect N sample sets S_i:
+Pr^{R_i | A} = \sum_{j = 1}^{N} I(s_j in S_i) / N
+Given that we collect N baseline sample sets B_i:
+Pr^{R_i} = \sum_{j = 1}^{N} I(s_j in B_i) / N
+
+Assuming that sample sets are independent, the indicator functions above are iid Bernoulli.
+This implies that the estimates Pr^ are Binomial.

@@ -2,6 +2,7 @@ import numpy
 
 from src.debug_utils import log, DEBUG, INFO
 
+from src.model import model_w_rounds as model_w_rounds_module
 from src.sim import tor_model as tor_model_module
 
 
@@ -22,6 +23,9 @@ def get_results_to_plot_w_model(
         num_samples=num_samples,
         kwargs=kwargs,
     )
+
+    prob_server_i_receives_list = []
+    prob_server_i_receives_given_attack_round_list = []
 
     E_time_to_deanonymize_list = []
     std_time_to_deanonymize_list = []
@@ -46,6 +50,7 @@ def get_results_to_plot_w_model(
         )
         log(INFO, "", disclosure_attack_result=disclosure_attack_result)
 
+        # Sim
         E_time_to_deanonymize = numpy.mean(disclosure_attack_result.time_to_deanonymize_list)
         std_time_to_deanonymize = numpy.std(disclosure_attack_result.time_to_deanonymize_list)
         E_time_to_deanonymize_list.append(E_time_to_deanonymize)
@@ -74,6 +79,19 @@ def get_results_to_plot_w_model(
         E_prob_non_target_identified_as_target_list.append(E_prob_non_target_identified_as_target)
         std_prob_non_target_identified_as_target_list.append(std_prob_non_target_identified_as_target)
 
+        # Model
+        model_w_rounds = model_w_rounds_module.Model_wRounds(
+            num_clients=num_clients,
+            num_servers=num_servers,
+            num_target_servers=num_target_servers,
+            prob_server_active=prob_server_active,
+            prob_attack_round=prob_attack_round,
+        )
+        prob_server_i_receives = model_w_rounds.prob_server_i_receives()
+        prob_server_i_receives_list.append(prob_server_i_receives)
+        prob_server_i_receives_given_attack_round = model_w_rounds.prob_server_i_receives_given_attack_round()
+        prob_server_i_receives_given_attack_round_list.append(prob_server_i_receives_given_attack_round)
+
         log(
             INFO, "",
             E_time_to_deanonymize=E_time_to_deanonymize,
@@ -83,7 +101,10 @@ def get_results_to_plot_w_model(
             E_prob_non_target_identified_as_target=E_prob_non_target_identified_as_target,
             std_prob_non_target_identified_as_target=std_prob_non_target_identified_as_target,
             target_server_set_accuracy=disclosure_attack_result.target_server_set_accuracy,
+            prob_server_i_receives=prob_server_i_receives,
+            prob_server_i_receives_given_attack_round=prob_server_i_receives_given_attack_round,
         )
+
 
     log(
         INFO, "",
@@ -95,6 +116,8 @@ def get_results_to_plot_w_model(
         std_prob_target_identified_as_non_target_list=std_prob_target_identified_as_non_target_list,
         E_prob_non_target_identified_as_target_list=E_prob_non_target_identified_as_target_list,
         std_prob_non_target_identified_as_target_list=std_prob_non_target_identified_as_target_list,
+        prob_server_i_receives_list=prob_server_i_receives_list,
+        prob_server_i_receives_given_attack_round_list=prob_server_i_receives_given_attack_round_list,
     )
 
     return dict(

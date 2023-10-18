@@ -500,6 +500,8 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             INFO, "",
             server_id_to_p_rv_map=server_id_to_p_rv_map,
             server_id_to_p_baseline_rv_map=server_id_to_p_baseline_rv_map,
+            avg_p_rv_mean=self.get_avg_p_rv_mean(),
+            avg_p_baseline_rv_mean=self.get_avg_p_baseline_rv_mean(),
         )
 
         for server_id in (
@@ -558,6 +560,22 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             data[i][0]
             for i in range(len(data))
             if labels[i] == label_for_target_servers
+        )
+
+    def get_avg_p_rv_mean(self) -> float:
+        return numpy.mean(
+            [
+                p_rv.mean()
+                for p_rv in self.get_server_id_to_p_rv_map().values()
+            ]
+        )
+
+    def get_avg_p_baseline_rv_mean(self) -> float:
+        return numpy.mean(
+            [
+                p_rv.mean()
+                for p_rv in self.get_server_id_to_p_baseline_rv_map().values()
+            ]
         )
 
 
