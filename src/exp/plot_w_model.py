@@ -52,6 +52,8 @@ def plot_time_to_deanonymize_vs_num_servers(
         r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
         r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
     )
+    if "max_stdev" in kwargs:
+        title += ", " + r"$\sigma_{\mathrm{max}} =$" + fr"${kwargs['max_stdev']}$"
     plot.suptitle(title, fontsize=fontsize)
 
     fig.set_size_inches(num_columns * 6, 4)
