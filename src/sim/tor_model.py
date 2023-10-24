@@ -86,7 +86,9 @@ class TorModel_wRounds:
 
             # Generate "client completed request" event.
             if random.random() <= self.prob_attack_round:
-                target_server_id = random.randint(0, self.num_target_servers - 1)
+                target_server_id = utils.get_server_id(
+                    random.randint(0, self.num_target_servers - 1)
+                )
                 msg = message.Message(
                     _id=f"{msg_count}",
                     _type=None,
