@@ -532,7 +532,7 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
 
         # Cluster the diffs
         data = [
-            [server_id, signal]
+            [server_id, abs(signal)]
             for server_id, signal in self.server_id_to_signal_map.items()
         ]
         array = numpy.array([[row[1]] for row in data])
