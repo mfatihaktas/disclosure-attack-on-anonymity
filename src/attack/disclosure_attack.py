@@ -391,7 +391,7 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
         return None
 
 
-class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
+class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
     def __init__(
         self,
         env: simpy.Environment,
@@ -410,7 +410,7 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
         self.server_id_to_signal_map = None
 
     def __repr__(self):
-        return "DisclosureAttack_wBaselineInspection_wBayesianEstimate"
+        return "DisclosureAttack_wBayesianEstimate"
 
     def update(self, sample_candidate_set: set[str]):
         slog(
@@ -452,10 +452,10 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             slog(
                 DEBUG, self.env, self,
                 "baseline inspection round",
-                num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
-                sample_candidate_set=sample_candidate_set,
+                # num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
+                # sample_candidate_set=sample_candidate_set,
                 num_baseline_sample_sets_collected=self.num_baseline_sample_sets_collected,
-                server_id_to_num_in_baseline_sample_set_map=self.server_id_to_num_in_baseline_sample_set_map,
+                # server_id_to_num_in_baseline_sample_set_map=self.server_id_to_num_in_baseline_sample_set_map,
             )
             self.num_baseline_sample_sets_collected += 1
 
@@ -498,8 +498,8 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
         server_id_to_p_baseline_rv_map = self.get_server_id_to_p_baseline_rv_map()
         log(
             INFO, "",
-            server_id_to_p_rv_map=server_id_to_p_rv_map,
-            server_id_to_p_baseline_rv_map=server_id_to_p_baseline_rv_map,
+            # server_id_to_p_rv_map=server_id_to_p_rv_map,
+            # server_id_to_p_baseline_rv_map=server_id_to_p_baseline_rv_map,
             avg_p_rv_mean=self.get_avg_p_rv_mean(),
             avg_p_baseline_rv_mean=self.get_avg_p_baseline_rv_mean(),
         )
@@ -524,16 +524,15 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             ):
                 return None
 
-        # Record the "signal" in the estimates available for detection
-        self.server_id_to_signal_map = {
-            server_id: p_rv.mean() - server_id_to_p_baseline_rv_map[server_id].mean()
-            for server_id, p_rv in server_id_to_p_rv_map.items()
-        }
+        return self.get_target_server_id_set()
 
-        # Cluster the diffs
+    def get_target_server_id_set(self) -> set[str]:
+        server_id_to_signal_map = self.get_server_id_to_signal_map()
+
+        # Cluster the signals
         data = [
             [server_id, abs(signal)]
-            for server_id, signal in self.server_id_to_signal_map.items()
+            for server_id, signal in server_id_to_signal_map.items()
         ]
         array = numpy.array([[row[1]] for row in data])
         centroids, labels, inertia = sklearn.cluster.k_means(array, 2)
@@ -562,6 +561,15 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
             if labels[i] == label_for_target_servers
         )
 
+    def get_server_id_to_signal_map(self) -> dict[str, float]:
+        server_id_to_p_rv_map = self.get_server_id_to_p_rv_map()
+        server_id_to_p_baseline_rv_map = self.get_server_id_to_p_baseline_rv_map()
+
+        return {
+            server_id: p_rv.mean() - server_id_to_p_baseline_rv_map[server_id].mean()
+            for server_id, p_rv in server_id_to_p_rv_map.items()
+        }
+
     def get_avg_p_rv_mean(self) -> float:
         return numpy.mean(
             [
@@ -577,6 +585,33 @@ class DisclosureAttack_wBaselineInspection_wBayesianEstimate(DisclosureAttack_wB
                 for p_rv in self.get_server_id_to_p_baseline_rv_map().values()
             ]
         )
+
+
+class DisclosureAttack_wOutlierDetection(DisclosureAttack_wBayesianEstimate):
+    def __init__(
+        self,
+        env: simpy.Environment,
+        max_msg_delivery_time: float,
+        max_stdev: float,
+    ):
+        super().__init__(
+            env=env,
+            max_msg_delivery_time=max_msg_delivery_time,
+            max_stdev=max_stdev,
+        )
+
+    def __repr__(self):
+        return "DisclosureAttack_wOutlierDetection"
+
+    def get_target_server_id_set(self) -> set[str]:
+        server_id_to_signal_map = self.get_server_id_to_signal_map()
+
+        signal_threshold = self.max_stdev * 2
+        return [
+            server_id
+            for server_id, signal in server_id_to_signal_map.items()
+            if signal >= signal_threshold
+        ]
 
 
 @dataclasses.dataclass

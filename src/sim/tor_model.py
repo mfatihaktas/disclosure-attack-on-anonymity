@@ -133,7 +133,7 @@ def sim_w_disclosure_attack_w_joblib(
                 stability_threshold=kwargs["stability_threshold"],
             )
         elif "max_stdev" in kwargs:
-            adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wBayesianEstimate(
+            adversary = disclosure_attack.DisclosureAttack_wOutlierDetection(
                 env=env,
                 max_msg_delivery_time=max_msg_delivery_time,
                 max_stdev=kwargs["max_stdev"],
@@ -160,8 +160,8 @@ def sim_w_disclosure_attack_w_joblib(
             tor.get_attack_completion_time(),
             tor.get_num_rounds(),
         ]
-        if isinstance(adversary, disclosure_attack.DisclosureAttack_wBaselineInspection_wBayesianEstimate):
-            result_list.append(adversary.server_id_to_signal_map)
+        if isinstance(adversary, disclosure_attack.DisclosureAttack_wBayesianEstimate):
+            result_list.append(adversary.get_server_id_to_signal_map())
 
         return result_list
 
