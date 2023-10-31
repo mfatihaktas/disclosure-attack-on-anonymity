@@ -1,3 +1,4 @@
+import joblib
 import simpy
 
 from src import utils
@@ -19,22 +20,22 @@ class TorSystem():
         env: simpy.Environment,
         num_clients: int,
         num_servers: int,
+        num_target_servers: int,
         network_delay_rv: random_variable.RandomVariable,
         idle_time_rv: random_variable.RandomVariable,
         idle_time_rv_for_target_client: random_variable.RandomVariable,
         num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
-        num_target_servers: int,
     ):
         check(num_target_servers <= num_servers, "")
 
         self.env = env
         self.num_clients = num_clients
         self.num_servers = num_servers
+        self.num_target_servers = num_target_servers
         self.network_delay_rv = network_delay_rv
         self.idle_time_rv = idle_time_rv
         self.idle_time_rv_for_target_client = idle_time_rv_for_target_client
         self.num_msgs_to_recv_for_get_request_rv = num_msgs_to_recv_for_get_request_rv
-        self.num_target_servers = num_target_servers
 
         # Network
         self.network = network_module.Network_wDelayAssignedPerMessage(
@@ -120,7 +121,7 @@ class TorSystem():
         log(DEBUG, "Done")
 
 
-def sim_w_disclosure_attack(
+def sim_w_disclosure_attack_w_joblib(
     num_clients: int,
     num_servers: int,
     network_delay_rv: random_variable.RandomVariable,
@@ -164,14 +165,22 @@ def sim_w_disclosure_attack(
     true_target_server_id_set = set(
         f"{utils.get_server_id(server_rank)}" for server_rank in range(num_target_servers)
     )
-    # log(WARNING, "", true_target_server_id_set=true_target_server_id_set)
+
+    sim_result_list = joblib.Parallel(n_jobs=-1, prefer="threads")(
+        [
+            joblib.delayed(sim)()
+            for _ in range(num_samples)
+        ]
+    )
 
     time_to_deanonymize_list = []
     num_rounds_list = []
     num_correct_target_server_sets = 0
     classification_result_list = []
-    for _ in range(num_samples):
-        target_server_id_set, time_to_deanonymize, num_rounds = sim()
+    for sim_result in sim_result_list:
+        target_server_id_set = sim_result[0]
+        time_to_deanonymize = sim_result[1]
+        num_rounds = sim_result[2]
         log(
             INFO, "",
             target_server_id_set=target_server_id_set,
