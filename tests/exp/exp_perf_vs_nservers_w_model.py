@@ -3,8 +3,8 @@ from src.exp import plot_w_model
 
 if __name__ == "__main__":
     num_target_servers = 1
-    # num_servers_list = [3]
-    num_servers_list = [100]
+    num_servers_list = [3]
+    # num_servers_list = [100]
     # num_servers_list = [3, 20, 100]
     # # num_servers_list = list(range(3, 20))
     # num_servers_list = [3, 10, 20, 50, 100, 200, 300, 400]

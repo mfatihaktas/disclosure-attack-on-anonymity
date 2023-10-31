@@ -1,12 +1,14 @@
 import numpy
 
+from typing import Callable
+
 from src.debug_utils import log, DEBUG, INFO
 
 from src.model import model_w_rounds as model_w_rounds_module
 from src.sim import tor_model as tor_model_module
 
 
-def get_results_to_plot_w_model(
+def _get_results_to_plot_w_model(
     num_target_servers: int,
     num_servers_list: list[int],
     prob_server_active: float,
@@ -105,7 +107,6 @@ def get_results_to_plot_w_model(
             prob_server_i_receives_given_attack_round=prob_server_i_receives_given_attack_round,
         )
 
-
     log(
         INFO, "",
         E_time_to_deanonymize_list=E_time_to_deanonymize_list,
@@ -118,6 +119,93 @@ def get_results_to_plot_w_model(
         std_prob_non_target_identified_as_target_list=std_prob_non_target_identified_as_target_list,
         prob_server_i_receives_list=prob_server_i_receives_list,
         prob_server_i_receives_given_attack_round_list=prob_server_i_receives_given_attack_round_list,
+    )
+
+    return dict(
+        E_time_to_deanonymize_list=E_time_to_deanonymize_list,
+        std_time_to_deanonymize_list=std_time_to_deanonymize_list,
+        E_num_rounds_list=E_num_rounds_list,
+        std_num_rounds_list=std_num_rounds_list,
+        E_prob_non_target_identified_as_target_list=E_prob_non_target_identified_as_target_list,
+        std_prob_non_target_identified_as_target_list=std_prob_non_target_identified_as_target_list,
+        E_prob_target_identified_as_non_target_list=E_prob_target_identified_as_non_target_list,
+        std_prob_target_identified_as_non_target_list=std_prob_target_identified_as_non_target_list,
+    )
+
+
+def get_results_to_plot_w_model(
+    x_list: list,
+    disclosure_attack_result_given_x_func: Callable,
+):
+    log(
+        INFO, "Started",
+        x_list=x_list,
+    )
+
+    E_time_to_deanonymize_list = []
+    std_time_to_deanonymize_list = []
+    E_num_rounds_list = []
+    std_num_rounds_list = []
+    E_prob_non_target_identified_as_target_list = []
+    std_prob_non_target_identified_as_target_list = []
+    E_prob_target_identified_as_non_target_list = []
+    std_prob_target_identified_as_non_target_list = []
+    for x in x_list:
+        log(INFO, f">> x= {x}")
+
+        disclosure_attack_result = disclosure_attack_result_given_x_func(x)
+        log(INFO, "", disclosure_attack_result=disclosure_attack_result)
+
+        # Sim
+        E_time_to_deanonymize = numpy.mean(disclosure_attack_result.time_to_deanonymize_list)
+        std_time_to_deanonymize = numpy.std(disclosure_attack_result.time_to_deanonymize_list)
+        E_time_to_deanonymize_list.append(E_time_to_deanonymize)
+        std_time_to_deanonymize_list.append(std_time_to_deanonymize)
+
+        E_num_rounds = numpy.mean(disclosure_attack_result.num_rounds_list)
+        std_num_rounds = numpy.std(disclosure_attack_result.num_rounds_list)
+        E_num_rounds_list.append(E_num_rounds)
+        std_num_rounds_list.append(std_num_rounds)
+
+        prob_target_identified_as_non_target_list = [
+            classification_result.prob_target_identified_as_non_target
+            for classification_result in disclosure_attack_result.classification_result_list
+        ]
+        E_prob_target_identified_as_non_target = numpy.mean(prob_target_identified_as_non_target_list)
+        std_prob_target_identified_as_non_target = numpy.std(prob_target_identified_as_non_target_list)
+        E_prob_target_identified_as_non_target_list.append(E_prob_target_identified_as_non_target)
+        std_prob_target_identified_as_non_target_list.append(std_prob_target_identified_as_non_target)
+
+        prob_non_target_identified_as_target_list = [
+            classification_result.prob_non_target_identified_as_target
+            for classification_result in disclosure_attack_result.classification_result_list
+        ]
+        E_prob_non_target_identified_as_target = numpy.mean(prob_non_target_identified_as_target_list)
+        std_prob_non_target_identified_as_target = numpy.std(prob_non_target_identified_as_target_list)
+        E_prob_non_target_identified_as_target_list.append(E_prob_non_target_identified_as_target)
+        std_prob_non_target_identified_as_target_list.append(std_prob_non_target_identified_as_target)
+
+        log(
+            INFO, "",
+            E_time_to_deanonymize=E_time_to_deanonymize,
+            std_time_to_deanonymize=std_time_to_deanonymize,
+            E_num_rounds=E_num_rounds,
+            std_num_rounds=std_num_rounds,
+            E_prob_non_target_identified_as_target=E_prob_non_target_identified_as_target,
+            std_prob_non_target_identified_as_target=std_prob_non_target_identified_as_target,
+            target_server_set_accuracy=disclosure_attack_result.target_server_set_accuracy,
+        )
+
+    log(
+        INFO, "",
+        E_time_to_deanonymize_list=E_time_to_deanonymize_list,
+        std_time_to_deanonymize_list=std_time_to_deanonymize_list,
+        E_num_rounds_list=E_num_rounds_list,
+        std_num_rounds_list=std_num_rounds_list,
+        E_prob_target_identified_as_non_target_list=E_prob_target_identified_as_non_target_list,
+        std_prob_target_identified_as_non_target_list=std_prob_target_identified_as_non_target_list,
+        E_prob_non_target_identified_as_target_list=E_prob_non_target_identified_as_target_list,
+        std_prob_non_target_identified_as_target_list=std_prob_non_target_identified_as_target_list,
     )
 
     return dict(
