@@ -7,7 +7,7 @@ if [ $1 = "i" ]; then
   # srun --partition=main --nodes=1 --ntasks=1 --cpus-per-task=20 --mem=16000 --time=3:00:00 --export=ALL --pty bash -i
 
 elif [ $1 = "j" ]; then
-  FILE="exp_time_to_deanon_vs_num_servers"
+  FILE="exp_perf_vs_num_servers"
 
   NTASKS=1
   echo "#!/bin/bash

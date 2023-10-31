@@ -7,7 +7,7 @@ from src.debug_utils import log, INFO
 from src.plot_utils import NICE_BLUE, NICE_ORANGE, NICE_RED, plot
 
 
-def plot_time_to_deanonymize_vs_num_servers(
+def plot_perf_vs_num_servers(
     network_delay_rv: random_variable.RandomVariable,
     idle_time_rv: random_variable.RandomVariable,
     idle_time_rv_for_target_client: random_variable.RandomVariable,

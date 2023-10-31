@@ -16,7 +16,7 @@ if __name__ == "__main__":
     stability_threshold = 0.003
     num_samples = 1  # 5
 
-    plot.plot_time_to_deanonymize_vs_num_servers(
+    plot.plot_perf_vs_num_servers(
         network_delay_rv=network_delay_rv,
         idle_time_rv=idle_time_rv,
         idle_time_rv_for_target_client=idle_time_rv_for_target_client,
