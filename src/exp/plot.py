@@ -14,6 +14,7 @@ def plot_(
     results_dict: dict[str, list[float]],
     x_label: str,
     title: str,
+    plot_name: str,
 ):
     fontsize = 14
     num_columns = 3
@@ -37,10 +38,13 @@ def plot_(
     plot.xlabel(x_label, fontsize=fontsize)
     plot.ylabel(r"$\mathrm{Pr}\{$non-target identified as target$\}$", fontsize=fontsize)
 
-    plot.suptitle(title, fontsize=fontsize)
+    st = plot.suptitle(title, fontsize=fontsize)  # , y=1.1
 
     fig.set_size_inches(num_columns * 6, 4)
     plot.subplots_adjust(hspace=0.25, wspace=0.25)
+
+    plot.savefig(f"plots/{plot_name}.pdf", bbox_extra_artists=[st], bbox_inches="tight")
+    plot.gcf().clear()
 
 
 def plot_perf(
@@ -60,10 +64,8 @@ def plot_perf(
         results_dict=results_dict,
         x_label=x_label,
         title=title,
+        plot_name=plot_name,
     )
-
-    plot.savefig(f"plots/{plot_name}.pdf", bbox_inches="tight")
-    plot.gcf().clear()
 
 
 def plot_perf_vs_num_servers(
@@ -97,22 +99,32 @@ def plot_perf_vs_num_servers(
             **kwargs,
         )
 
+    title = r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
+    if network_delay_rv:
+        title += (
+            r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
+            r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
+            r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, "
+        )
+    if prob_server_active:
+        title += (
+            r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
+            r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
+        )
+    title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
+
     plot_perf(
         x_list=num_servers_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
         x_label=r"$N_{\mathrm{target}}$",
-        title=(
-            r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
-            r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
-            r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
-            r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$, "
-        ),
+        title=title,
         plot_name=(
             "plot_perf_vs_nservers"
             f"_ntarget_{num_target_servers}"
             f"_pserver_{prob_server_active}"
             f"_pclient_{prob_attack_round}"
             f"_nsamples_{num_samples}"
+            f"_wmodel_{w_model}"
         ),
     )
 
@@ -152,22 +164,36 @@ def plot_perf_vs_max_stdev(
             **kwargs,
         )
 
+    title = (
+        r"$N_{\mathrm{server}} =$" + fr"${num_servers}$, "
+        r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
+    )
+    if network_delay_rv:
+        title += (
+            r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
+            r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
+            r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, "
+        )
+    if prob_server_active:
+        title += (
+            r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
+            r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
+        )
+    title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
+
     plot_perf(
         x_list=max_stdev_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
         x_label=r"$\sigma_{\mathrm{max}}$",
-        title=(
-            r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
-            r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
-            r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
-            r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$, "
-        ),
+        title=title,
         plot_name=(
             "plot_perf_vs_max_stdev"
+            f"_nserver_{num_servers}"
             f"_ntarget_{num_target_servers}"
             f"_pserver_{prob_server_active}"
             f"_pclient_{prob_attack_round}"
             f"_nsamples_{num_samples}"
+            f"_wmodel_{w_model}"
         ),
     )
 
