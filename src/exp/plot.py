@@ -116,7 +116,7 @@ def plot_perf_vs_num_servers(
     plot_perf(
         x_list=num_servers_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
-        x_label=r"$N_{\mathrm{target}}$",
+        x_label=r"$N_{\mathrm{server}}$",
         title=title,
         plot_name=(
             "plot_perf_vs_nservers"
