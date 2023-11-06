@@ -127,7 +127,6 @@ def plot_perf_vs_num_servers(
             f"_wmodel_{w_model}"
         ),
     )
-
     log(INFO, "Done")
 
 
