@@ -2,13 +2,13 @@
 echo $1 $2 $3
 
 if [ $1 = "i" ]; then
-  srun --partition=main --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=4000 --time=8:00:00 --export=ALL --pty bash -i
+  srun --partition=main --nodes=1 --ntasks=1 --cpus-per-task=4 --mem=8000 --time=8:00:00 --export=ALL --pty bash -i
   # srun --partition=main --nodes=1 --ntasks=1 --cpus-per-task=8 --mem=16000 --time=12:00:00 --export=ALL --pty bash -i
   # srun --partition=main --nodes=1 --ntasks=1 --cpus-per-task=20 --mem=16000 --time=3:00:00 --export=ALL --pty bash -i
 
 elif [ $1 = "j" ]; then
-  # FILE="exp_perf_vs_num_servers"
-  FILE="exp_perf_vs_max_stdev"
+  FILE="exp_perf_vs_nservers"
+  # FILE="exp_perf_vs_max_stdev"
 
   NTASKS=1
   echo "#!/bin/bash

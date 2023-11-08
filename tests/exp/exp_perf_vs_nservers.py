@@ -3,16 +3,16 @@ from src.prob import random_variable
 
 
 if __name__ == "__main__":
-    num_servers_list = [3, 5]
+    # num_servers_list = [3, 5]
     # num_servers_list = [100]
     # num_servers_list = [3, 20, 100]
     # # num_servers_list = list(range(3, 20))
-    # num_servers_list = [3, 10, 20, 50, 100, 200, 300, 400]
+    num_servers_list = [3, 10, 20, 50, 100, 200, 300, 400, 500]
     # num_servers_list = [3, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000]
-    num_target_servers = 1
+    num_target_servers = 2
     num_samples = 1  # 5
-    w_model = False
-    # w_model = True
+    # w_model = False
+    w_model = True
 
     network_delay_rv = random_variable.Uniform(min_value=1, max_value=5)
     # idle_time_rv = random_variable.Exponential(mu=1)
