@@ -111,6 +111,9 @@ def plot_perf_vs_num_servers(
             r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
             r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
         )
+
+    if "max_stdev" in kwargs:
+        title += r"$\sigma_{\mathrm{max}} =$" + fr"${kwargs['max_stdev']}$, "
     title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
 
     plot_perf(
