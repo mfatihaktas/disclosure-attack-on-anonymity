@@ -4,10 +4,10 @@ from src.prob import random_variable
 
 if __name__ == "__main__":
     # num_servers_list = [3, 5]
-    # num_servers_list = [100]
+    num_servers_list = [10]
     # num_servers_list = [3, 20, 100]
     # # num_servers_list = list(range(3, 20))
-    num_servers_list = [3, 10, 20, 50, 100, 200, 300, 400, 500]
+    # num_servers_list = [3, 10, 20, 50, 100, 200, 300, 400, 500]
     # num_servers_list = [3, 20, 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000]
     num_target_servers = 2
     num_samples = 1  # 5
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     prob_attack_round = 0.4
 
     # stability_threshold = 0.003
-    max_stdev = 0.05
+    max_stdev = 0.03
 
     plot.plot_perf_vs_num_servers(
         num_servers_list=num_servers_list,

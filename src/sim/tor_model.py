@@ -8,6 +8,7 @@ from src.attack import (
     disclosure_attack,
 )
 from src.debug_utils import check, DEBUG, ERROR, INFO, log
+from src.model import model_w_rounds
 from src.sim import message
 
 
@@ -107,9 +108,23 @@ class TorModel_wRounds:
         log(DEBUG, "Done")
 
     def run(self):
-        log(DEBUG, "Started")
+        log(INFO, "Started")
         self.env.run(until=self.adversary.attack_completed_event)
-        log(DEBUG, "Done")
+
+        analytical_model = model_w_rounds.Model_wRounds(
+            num_clients=self.num_clients,
+            num_servers=self.num_servers,
+            num_target_servers=self.num_target_servers,
+            prob_server_active=self.prob_server_active,
+            prob_attack_round=self.prob_attack_round,
+        )
+        log(
+            INFO, "Done",
+            prob_target_server_is_active_given_attack_round=analytical_model.prob_target_server_is_active_given_attack_round(),
+            prob_target_server_is_active=analytical_model.prob_target_server_is_active(),
+            prob_nontarget_server_is_active_given_attack_round=analytical_model.prob_nontarget_server_is_active_given_attack_round(),
+            prob_nontarget_server_is_active=analytical_model.prob_nontarget_server_is_active(),
+        )
 
 
 def sim_w_disclosure_attack_w_joblib(

@@ -61,8 +61,7 @@ class DisclosureAttack(adversary_module.Adversary):
         num_msgs_recved_for_get_request: int,
     ):
         slog(
-            INFO, self.env, self,
-            "client completed request",
+            INFO, self.env, self, "client completed request",
             num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
             # server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
         )
@@ -70,7 +69,12 @@ class DisclosureAttack(adversary_module.Adversary):
         sample_candidate_set = self.get_sample_candidate_set(
             num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
         )
-        check(sample_candidate_set, "`sample_candidate_set` cannot be empty")
+        slog(
+            INFO, self.env, self, "",
+            sample_candidate_set=sample_candidate_set,
+        )
+        if not sample_candidate_set:
+            return
 
         self.trim_server_id_to_time_epochs_msg_sent_map()
 
@@ -84,7 +88,7 @@ class DisclosureAttack(adversary_module.Adversary):
                 INFO, self.env, self,
                 "completed attack",
                 target_server_id_set=self.target_server_id_set,
-                server_id_to_weight_map=self.server_id_to_weight_map,
+                end_of_attack_log=self.get_end_of_attack_log(),
             )
             self.time_to_complete_attack = self.env.now
             self.attack_completed_event.succeed()
@@ -116,34 +120,6 @@ class DisclosureAttack(adversary_module.Adversary):
             num_sampled_candidates=len(sample_candidate_set),
             # sample_candidate_set=sample_candidate_set,
         )
-
-    def _check_for_completion(self) -> Optional[list[str]]:
-        if self.num_sample_sets_collected < 10:
-            return None
-
-        weight_and_server_id_list = sorted(
-            [
-                (weight, server_id)
-                for server_id, weight in self.server_id_to_weight_map.items()
-            ],
-            reverse=True,
-        )
-        log(DEBUG, "", weight_and_server_id_list=weight_and_server_id_list)
-
-        for m in range(1, len(weight_and_server_id_list) + 1):
-            target_weight = 1 / m
-            if all(
-                abs(
-                    weight_and_server_id_list[i][0] - target_weight
-                ) / target_weight <= self.error_percent
-                for i in range(m)
-            ):
-                return [
-                    server_id
-                    for (_, server_id) in weight_and_server_id_list[:m]
-                ]
-
-        return None
 
     def check_if_attack_completed(self) -> Optional[set[str]]:
         if self.num_sample_sets_collected < 10:
@@ -231,6 +207,13 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
     def __repr__(self):
         return "DisclosureAttack_wBaselineInspection"
 
+    def get_end_of_attack_log(self) -> dict:
+        return {
+            "server_id_to_weight_map": self.server_id_to_weight_map,
+            "server_id_to_baseline_weight_map": self.server_id_to_baseline_weight_map,
+            "server_id_weight_diff_map": self.server_id_weight_diff_map,
+        }
+
     def baseline_inspection(self):
         interval_rv = random_variable.Exponential(mu=1)
 
@@ -269,43 +252,6 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
                 server_id_to_baseline_weight_map=self.server_id_to_baseline_weight_map,
             )
             self.num_baseline_sample_sets_collected += 1
-
-    def client_completed_get_request(
-        self,
-        num_msgs_recved_for_get_request: int,
-    ):
-        slog(
-            INFO, self.env, self, "client completed request",
-            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
-            # server_id_to_time_epochs_msg_sent_map=self.server_id_to_time_epochs_msg_sent_map,
-        )
-
-        sample_candidate_set = self.get_sample_candidate_set(
-            num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
-        )
-        slog(
-            INFO, self.env, self, "",
-            sample_candidate_set=sample_candidate_set,
-        )
-        if not sample_candidate_set:
-            return
-
-        self.trim_server_id_to_time_epochs_msg_sent_map()
-
-        # Update the attack state
-        self.update(sample_candidate_set=sample_candidate_set)
-
-        # Check if the attack is completed
-        self.target_server_id_set = self.check_if_attack_completed()
-        if self.target_server_id_set is not None:
-            slog(
-                INFO, self.env, self,
-                "completed attack",
-                target_server_id_set=self.target_server_id_set,
-                server_id_weight_diff_map=self.server_id_weight_diff_map,
-            )
-            self.time_to_complete_attack = self.env.now
-            self.attack_completed_event.succeed()
 
 
 class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wBaselineInspection):
@@ -348,7 +294,7 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
 
         self.num_rounds_stationary += 1
         log(
-            INFO, "",
+            DEBUG, "",
             server_id_to_weight_map=self.server_id_to_weight_map,
             server_id_to_baseline_weight_map=self.server_id_to_baseline_weight_map,
             server_id_weight_diff_map=self.server_id_weight_diff_map,
@@ -407,10 +353,20 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
         )
         self.max_stdev = max_stdev
 
-        self.server_id_to_signal_map = None
-
     def __repr__(self):
         return "DisclosureAttack_wBayesianEstimate"
+
+    def get_end_of_attack_log(self) -> dict:
+        return {
+            "server_id_to_freq_in_sample_set_map": {
+                server_id: p_rv.mean()
+                for server_id, p_rv in self.get_server_id_to_p_rv_map().items()
+            },
+            "server_id_to_freq_in_baseline_sample_set_map": {
+                server_id: p_rv.mean()
+                for server_id, p_rv in self.get_server_id_to_p_baseline_rv_map().items()
+            },
+        }
 
     def update(self, sample_candidate_set: set[str]):
         slog(

@@ -29,14 +29,20 @@ class Model_wRounds():
             ")"
         )
 
-    def prob_server_i_receives(self) -> float:
+    def prob_target_server_is_active(self) -> float:
         return (
-            self.prob_server_i_receives_given_attack_round() * self.prob_attack_round
+            self.prob_target_server_is_active_given_attack_round() * self.prob_attack_round
             + self.prob_server_active * (1 - self.prob_attack_round)
         )
 
-    def prob_server_i_receives_given_attack_round(self) -> float:
+    def prob_target_server_is_active_given_attack_round(self) -> float:
         return (
             1 / self.num_target_servers
             + self.prob_server_active * (1 - 1 / self.num_target_servers)
         )
+
+    def prob_nontarget_server_is_active(self) -> float:
+        return self.prob_server_active
+
+    def prob_nontarget_server_is_active_given_attack_round(self) -> float:
+        return self.prob_server_active
