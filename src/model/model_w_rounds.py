@@ -1,3 +1,5 @@
+import math
+
 from src.debug_utils import check, DEBUG, ERROR, INFO, log
 
 
@@ -46,3 +48,26 @@ class Model_wRounds():
 
     def prob_nontarget_server_is_active_given_attack_round(self) -> float:
         return self.prob_server_active
+
+    def max_stdev_of_prob_estimates(
+        self,
+        detection_gap_exp_factor: float,
+    ) -> float:
+        return (
+            (
+                self.prob_target_server_is_active_given_attack_round()
+                - self.prob_target_server_is_active()
+            ) / 2 / math.sqrt(2) / detection_gap_exp_factor
+        )
+
+    def detection_threshold(
+        self,
+        detection_gap_exp_factor: float,
+    ) -> float:
+        return (
+            math.sqrt(2)
+            * detection_gap_exp_factor
+            * self.max_stdev_of_prob_estimates(
+                detection_gap_exp_factor=detection_gap_exp_factor
+            )
+        )

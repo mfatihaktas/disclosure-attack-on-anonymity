@@ -9,6 +9,7 @@ from src.attack import (
 )
 from src.debug_utils import check, DEBUG, ERROR, INFO, log
 from src.model import model_w_rounds
+from src.prob import random_variable
 from src.sim import message
 
 
@@ -63,6 +64,7 @@ class TorModel_wRounds:
     def generate_model_events(self):
         log(DEBUG, "Started")
 
+        interval_rv = random_variable.Exponential(mu=0.3 / self.max_msg_delivery_time)
         target_client_id = -1
         msg_count = 0
         while True:
@@ -103,7 +105,8 @@ class TorModel_wRounds:
                 )
 
             # Wait long enough for the next round.
-            yield self.env.timeout(2 * self.max_msg_delivery_time)
+            interval = interval_rv.sample()
+            yield self.env.timeout(interval)
 
         log(DEBUG, "Done")
 

@@ -20,12 +20,13 @@ if __name__ == "__main__":
     idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
 
-    prob_server_active = 0.8
+    prob_server_active = 0.5
     # prob_server_active = 1
-    prob_attack_round = 0.4
+    prob_attack_round = 0.5  # 0.4
 
     # stability_threshold = 0.003
-    max_stdev = 0.03
+    # max_stdev = 0.03
+    detection_gap_exp_factor = 2
 
     plot.plot_perf_vs_num_servers(
         num_servers_list=num_servers_list,
@@ -38,5 +39,6 @@ if __name__ == "__main__":
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         prob_server_active=prob_server_active,
         prob_attack_round=prob_attack_round,
-        max_stdev=max_stdev,
+        # max_stdev=max_stdev,
+        detection_gap_exp_factor=detection_gap_exp_factor,
     )

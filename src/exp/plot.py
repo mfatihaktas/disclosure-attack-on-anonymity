@@ -114,6 +114,8 @@ def plot_perf_vs_num_servers(
 
     if "max_stdev" in kwargs:
         title += r"$\sigma_{\mathrm{max}} =$" + fr"${kwargs['max_stdev']}$, "
+    if "detection_gap_exp_factor" in kwargs:
+        title += fr"$\gamma = {kwargs['detection_gap_exp_factor']}$"
     title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
 
     plot_perf(

@@ -215,7 +215,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         }
 
     def baseline_inspection(self):
-        interval_rv = random_variable.Exponential(mu=1)
+        interval_rv = random_variable.Exponential(mu=2 / self.max_msg_delivery_time)
 
         num_msgs_recved_for_get_request = 1
         while True:
@@ -343,6 +343,7 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
         env: simpy.Environment,
         max_msg_delivery_time: float,
         max_stdev: float,
+        detection_threshold: float,
     ):
         self.server_id_to_num_times_in_sample_set_map = collections.defaultdict(int)
         self.server_id_to_num_in_baseline_sample_set_map = collections.defaultdict(int)
@@ -352,12 +353,15 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
             max_msg_delivery_time=max_msg_delivery_time,
         )
         self.max_stdev = max_stdev
+        self.detection_threshold = detection_threshold
 
     def __repr__(self):
         return "DisclosureAttack_wBayesianEstimate"
 
     def get_end_of_attack_log(self) -> dict:
         return {
+            "max_stdev": self.max_stdev,
+            "detection_threshold": self.detection_threshold,
             "server_id_to_freq_in_sample_set_map": {
                 server_id: p_rv.mean()
                 for server_id, p_rv in self.get_server_id_to_p_rv_map().items()
@@ -387,7 +391,7 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
         )
 
     def baseline_inspection(self):
-        interval_rv = random_variable.Exponential(mu=1)
+        interval_rv = random_variable.Exponential(mu=3 / self.max_msg_delivery_time)
 
         num_msgs_recved_for_get_request = 1
         while True:
@@ -470,6 +474,7 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
                 INFO, f"> server_id= {server_id}",
                 stdev=stdev,
                 stdev_baseline=stdev_baseline,
+                max_stdev=self.max_stdev,
             )
 
             if (
@@ -549,11 +554,13 @@ class DisclosureAttack_wOutlierDetection(DisclosureAttack_wBayesianEstimate):
         env: simpy.Environment,
         max_msg_delivery_time: float,
         max_stdev: float,
+        detection_threshold: float,
     ):
         super().__init__(
             env=env,
             max_msg_delivery_time=max_msg_delivery_time,
             max_stdev=max_stdev,
+            detection_threshold=detection_threshold,
         )
 
     def __repr__(self):
@@ -561,12 +568,10 @@ class DisclosureAttack_wOutlierDetection(DisclosureAttack_wBayesianEstimate):
 
     def get_target_server_id_set(self) -> set[str]:
         server_id_to_signal_map = self.get_server_id_to_signal_map()
-
-        signal_threshold = self.max_stdev * 2
         return [
             server_id
             for server_id, signal in server_id_to_signal_map.items()
-            if signal >= signal_threshold
+            if signal >= self.detection_threshold
         ]
 
 
