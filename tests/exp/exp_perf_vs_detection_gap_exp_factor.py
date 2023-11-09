@@ -1,3 +1,5 @@
+import numpy
+
 from src.exp import plot
 from src.prob import random_variable
 
@@ -5,7 +7,7 @@ from src.prob import random_variable
 if __name__ == "__main__":
     detection_gap_exp_factor_list = [1]
     # detection_gap_exp_factor_list = [0.5, 1, 1.5]
-    detection_gap_exp_factor_list = [0.5, 1, 1.5]
+    # detection_gap_exp_factor_list = list(numpy.linspace(0.5, 2, num=6, endpoint=True))
 
     num_servers = 100
     num_target_servers = 2
