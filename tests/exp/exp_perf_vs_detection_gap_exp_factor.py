@@ -3,12 +3,13 @@ from src.prob import random_variable
 
 
 if __name__ == "__main__":
-    # max_stdev_list = [0.05]
-    max_stdev_list = [0.03, 0.05, 0.07, 0.1, 0.15, 0.2, 0.3]
+    detection_gap_exp_factor_list = [1]
+    # detection_gap_exp_factor_list = [0.5, 1, 1.5]
+    detection_gap_exp_factor_list = [0.5, 1, 1.5]
 
     num_servers = 100
-    num_target_servers = 1
-    num_samples = 3  # 5
+    num_target_servers = 2
+    num_samples = 1  # 3  # 5
     # w_model = False
     w_model = True
 
@@ -18,12 +19,11 @@ if __name__ == "__main__":
     idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
 
-    prob_server_active = 0.8
-    # prob_server_active = 1
-    prob_attack_round = 0.4
+    prob_server_active = 0.5
+    prob_attack_round = 0.5
 
-    plot.plot_perf_vs_max_stdev(
-        max_stdev_list=max_stdev_list,
+    plot.plot_perf_vs_detection_gap_exp_factor(
+        detection_gap_exp_factor_list=detection_gap_exp_factor_list,
         num_servers=num_servers,
         num_target_servers=num_target_servers,
         num_samples=num_samples,

@@ -70,7 +70,7 @@ class DisclosureAttack(adversary_module.Adversary):
             num_msgs_recved_for_get_request=num_msgs_recved_for_get_request,
         )
         slog(
-            INFO, self.env, self, "",
+            DEBUG, self.env, self, "",
             sample_candidate_set=sample_candidate_set,
         )
         if not sample_candidate_set:

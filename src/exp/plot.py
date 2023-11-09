@@ -135,8 +135,8 @@ def plot_perf_vs_num_servers(
     log(INFO, "Done")
 
 
-def plot_perf_vs_max_stdev(
-    max_stdev_list: list[float],
+def plot_perf_vs_detection_gap_exp_factor(
+    detection_gap_exp_factor_list: list[float],
     num_servers: int,
     num_target_servers: int,
     num_samples: int,
@@ -150,7 +150,7 @@ def plot_perf_vs_max_stdev(
     **kwargs,
 ):
     def disclosure_attack_result_given_x_func(
-        max_stdev: float,
+        detection_gap_exp_factor: float,
     ) -> disclosure_attack.DisclosureAttackResult:
         return sim_module.sim_w_disclosure_attack_w_joblib(
             num_clients=num_servers,
@@ -164,7 +164,7 @@ def plot_perf_vs_max_stdev(
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             prob_server_active=prob_server_active,
             prob_attack_round=prob_attack_round,
-            max_stdev=max_stdev,
+            detection_gap_exp_factor=detection_gap_exp_factor,
             **kwargs,
         )
 
@@ -186,12 +186,12 @@ def plot_perf_vs_max_stdev(
     title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
 
     plot_perf(
-        x_list=max_stdev_list,
+        x_list=detection_gap_exp_factor_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
-        x_label=r"$\sigma_{\mathrm{max}}$",
+        x_label=r"$\gamma$",
         title=title,
         plot_name=(
-            "plot_perf_vs_max_stdev"
+            "plot_perf_vs_detection_gap_exp_factor"
             f"_nserver_{num_servers}"
             f"_ntarget_{num_target_servers}"
             f"_pserver_{prob_server_active}"
