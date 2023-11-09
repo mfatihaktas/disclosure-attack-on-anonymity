@@ -8,7 +8,7 @@ if [ $1 = "i" ]; then
 
 elif [ $1 = "j" ]; then
   FILE="exp_perf_vs_nservers"
-  # FILE="exp_perf_vs_max_stdev"
+  # FILE="exp_perf_vs_detection_gap_exp_factor"
 
   NTASKS=1
   echo "#!/bin/bash
