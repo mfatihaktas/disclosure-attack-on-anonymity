@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 from src.exp import utils
 
@@ -68,6 +68,56 @@ def plot_perf(
     )
 
 
+def get_title_and_plot_name_tail(
+    w_model: bool,
+    num_target_servers: int,
+    num_samples: int,
+    **kwargs,
+) -> Tuple[str, str]:
+    title = ""
+    plot_name_tail = f"wmodel_{w_model}"
+
+    if "num_servers" in kwargs:
+        title += r"$N_{\mathrm{server}} =$" + fr"${kwargs['num_servers']}$, "
+        plot_name_tail += f"_nservers_{kwargs['prob_server_active']}"
+    title += r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
+    plot_name_tail += f"_ntarget_{num_target_servers}"
+
+    if w_model:
+        title += (
+            r"$p_{\mathrm{server}} =$" + fr"${kwargs['prob_server_active']}$, "
+            r"$p_{\mathrm{client}} =$" + fr"${kwargs['prob_attack_round']}$, "
+        )
+        plot_name_tail += (
+            f"_pserver_{kwargs['prob_server_active']}"
+            f"_pattackround_{kwargs['prob_attack_round']}"
+        )
+
+    else:
+        title += (
+            r"$T_{\mathrm{net}} \sim$" + fr"${kwargs['network_delay_rv'].to_latex()}$, "
+            r"$T_{\mathrm{idle}} \sim$" + fr"${kwargs['idle_time_rv'].to_latex()}$, "
+            r"$N_{\mathrm{get}} \sim$" + fr"${kwargs['num_msgs_to_recv_for_get_request_rv'].to_latex()}$, "
+        )
+        plot_name_tail += (
+            f"_net_delay_{kwargs['network_delay_rv']}"
+            f"_idle_time_{kwargs['idle_time_rv']}"
+            f"_num_msgs_to_recv_{kwargs['num_msgs_to_recv_for_get_request_rv']}"
+        )
+
+    if "max_stdev" in kwargs:
+        title += r"$\sigma_{\mathrm{max}} =$" + fr"${kwargs['max_stdev']}$, "
+        plot_name_tail += f"_max_stdev_{kwargs['max_stdev']}"
+    if "detection_gap_exp_factor" in kwargs:
+        title += fr"$\gamma = {kwargs['detection_gap_exp_factor']}$, "
+        plot_name_tail += f"_detection_gap_exp_factor_{kwargs['detection_gap_exp_factor']}"
+
+    title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
+    plot_name_tail += f"_nsamples_{num_samples}"
+
+    return title, plot_name_tail
+
+
 def plot_perf_vs_num_servers(
     num_servers_list: list[float],
     num_target_servers: int,
@@ -99,38 +149,25 @@ def plot_perf_vs_num_servers(
             **kwargs,
         )
 
-    title = r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
-    if network_delay_rv:
-        title += (
-            r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
-            r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
-            r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, "
-        )
-    if prob_server_active:
-        title += (
-            r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
-            r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
-        )
-
-    if "max_stdev" in kwargs:
-        title += r"$\sigma_{\mathrm{max}} =$" + fr"${kwargs['max_stdev']}$, "
-    if "detection_gap_exp_factor" in kwargs:
-        title += fr"$\gamma = {kwargs['detection_gap_exp_factor']}$, "
-    title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
+    title, plot_name_tail = get_title_and_plot_name_tail(
+        w_model=w_model,
+        num_target_servers=num_target_servers,
+        num_samples=num_samples,
+        network_delay_rv=network_delay_rv,
+        idle_time_rv=idle_time_rv,
+        idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+        num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+        prob_server_active=prob_server_active,
+        prob_attack_round=prob_attack_round,
+        **kwargs,
+    )
 
     plot_perf(
         x_list=num_servers_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
         x_label=r"$N_{\mathrm{server}}$",
         title=title,
-        plot_name=(
-            "plot_perf_vs_nservers"
-            f"_ntarget_{num_target_servers}"
-            f"_pserver_{prob_server_active}"
-            f"_pclient_{prob_attack_round}"
-            f"_nsamples_{num_samples}"
-            f"_wmodel_{w_model}"
-        ),
+        plot_name=f"plot_perf_vs_nservers_{plot_name_tail}",
     )
     log(INFO, "Done")
 
@@ -168,37 +205,26 @@ def plot_perf_vs_detection_gap_exp_factor(
             **kwargs,
         )
 
-    title = (
-        r"$N_{\mathrm{server}} =$" + fr"${num_servers}$, "
-        r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
+    title, plot_name_tail = get_title_and_plot_name_tail(
+        w_model=w_model,
+        num_target_servers=num_target_servers,
+        num_samples=num_samples,
+        num_servers=num_servers,
+        network_delay_rv=network_delay_rv,
+        idle_time_rv=idle_time_rv,
+        idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+        num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+        prob_server_active=prob_server_active,
+        prob_attack_round=prob_attack_round,
+        **kwargs,
     )
-    if network_delay_rv:
-        title += (
-            r"$T_{\mathrm{net}} \sim$" + fr"${network_delay_rv.to_latex()}$, "
-            r"$T_{\mathrm{idle}} \sim$" + fr"${idle_time_rv.to_latex()}$, "
-            r"$N_{\mathrm{get}} \sim$" + fr"${num_msgs_to_recv_for_get_request_rv.to_latex()}$, "
-        )
-    if prob_server_active:
-        title += (
-            r"$p_{\mathrm{server}} =$" + fr"${prob_server_active}$, "
-            r"$p_{\mathrm{client}} =$" + fr"${prob_attack_round}$, "
-        )
-    title += r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
 
     plot_perf(
         x_list=detection_gap_exp_factor_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
         x_label=r"$\gamma$",
         title=title,
-        plot_name=(
-            "plot_perf_vs_detection_gap_exp_factor"
-            f"_nserver_{num_servers}"
-            f"_ntarget_{num_target_servers}"
-            f"_pserver_{prob_server_active}"
-            f"_pclient_{prob_attack_round}"
-            f"_nsamples_{num_samples}"
-            f"_wmodel_{w_model}"
-        ),
+        plot_name=f"plot_perf_vs_detection_gap_exp_factor_{plot_name_tail}",
     )
 
     log(INFO, "Done")
