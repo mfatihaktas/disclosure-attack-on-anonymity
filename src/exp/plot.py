@@ -79,7 +79,7 @@ def get_title_and_plot_name_tail(
 
     if "num_servers" in kwargs:
         title += r"$N_{\mathrm{server}} =$" + fr"${kwargs['num_servers']}$, "
-        plot_name_tail += f"_nservers_{kwargs['prob_server_active']}"
+        plot_name_tail += f"_nservers_{kwargs['num_servers']}"
     title += r"$N_{\mathrm{target}} =$" + fr"${num_target_servers}$, "
     plot_name_tail += f"_ntarget_{num_target_servers}"
 
