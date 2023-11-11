@@ -280,7 +280,7 @@ def plot_perf_vs_num_servers_excluded_from_threshold(
     plot_perf(
         x_list=num_servers_excluded_from_threshold_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
-        x_label=r"$\gamma$",
+        x_label=r"$N_{\mathrm{server-excluded}}$",
         title=title,
         plot_name=f"plot_perf_vs_num_servers_excluded_from_threshold_{plot_name_tail}",
     )
