@@ -26,6 +26,7 @@ if __name__ == "__main__":
 
     # stability_threshold = 0.003
     # max_stdev = 0.03
+    # detection_gap_exp_factor = 1.2
     detection_gap_exp_factor = 2
 
     plot.plot_perf_vs_num_servers(

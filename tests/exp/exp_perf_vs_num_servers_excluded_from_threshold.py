@@ -3,10 +3,11 @@ from src.prob import random_variable
 
 
 if __name__ == "__main__":
-    # num_servers_excluded_from_threshold_list = [1]
-    num_servers_excluded_from_threshold_list = [0, 1, 2]
-    # num_servers_excluded_from_threshold_list = list(numpy.linspace(0.5, 2, num=6, endpoint=True))
-    detection_gap_exp_factor = 0.5  # 1.2
+    num_servers_excluded_from_threshold_list = [1]
+    # num_servers_excluded_from_threshold_list = [0, 1, 2]
+    # num_servers_excluded_from_threshold_list = list(range(10))
+    detection_gap_exp_factor = 0.5
+    # detection_gap_exp_factor = 1.2
 
     num_servers = 100
     num_target_servers = 2
