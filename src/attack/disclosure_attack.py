@@ -82,7 +82,7 @@ class DisclosureAttack(adversary_module.Adversary):
         self.update(sample_candidate_set=sample_candidate_set)
 
         # Check if the attack is completed
-        self.target_server_id_set = self.check_if_attack_completed()
+        self.target_server_id_set = self.try_to_get_target_server_id_set()
         if self.target_server_id_set is not None:
             slog(
                 INFO, self.env, self,
@@ -121,7 +121,7 @@ class DisclosureAttack(adversary_module.Adversary):
             # sample_candidate_set=sample_candidate_set,
         )
 
-    def check_if_attack_completed(self) -> Optional[set[str]]:
+    def try_to_get_target_server_id_set(self) -> Optional[set[str]]:
         if self.num_sample_sets_collected < 10:
             return None
 
@@ -272,7 +272,7 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
     def __repr__(self):
         return f"DisclosureAttack_wBaselineInspection_wStationaryRounds(stability_threshold= {self.stability_threshold})"
 
-    def check_if_attack_completed(self) -> Optional[set[str]]:
+    def try_to_get_target_server_id_set(self) -> Optional[set[str]]:
         if self.num_sample_sets_collected < 10:
             return None
 
@@ -450,10 +450,7 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
             for server_id, num_times_in_sample_set in self.server_id_to_num_in_baseline_sample_set_map.items()
         }
 
-    def check_if_attack_completed(self) -> Optional[set[str]]:
-        if self.num_sample_sets_collected < 10:
-            return None
-
+    def is_attack_completed(self) -> bool:
         server_id_to_p_rv_map = self.get_server_id_to_p_rv_map()
         server_id_to_p_baseline_rv_map = self.get_server_id_to_p_baseline_rv_map()
         log(
@@ -470,12 +467,6 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
         ):
             stdev = server_id_to_p_rv_map[server_id].stdev() if server_id in server_id_to_p_rv_map else float("Inf")
             stdev_baseline = server_id_to_p_baseline_rv_map[server_id].stdev() if server_id in server_id_to_p_baseline_rv_map else float("Inf")
-            log(
-                INFO, f"> server_id= {server_id}",
-                stdev=stdev,
-                stdev_baseline=stdev_baseline,
-                max_stdev=self.max_stdev,
-            )
 
             if (
                 stdev is None or numpy.isnan(stdev)
@@ -483,7 +474,22 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
                 or stdev > self.max_stdev
                 or stdev_baseline > self.max_stdev
             ):
-                return None
+                log(
+                    INFO, f"> server_id= {server_id}",
+                    stdev=stdev,
+                    stdev_baseline=stdev_baseline,
+                    max_stdev=self.max_stdev,
+                )
+                return False
+
+        return True
+
+    def try_to_get_target_server_id_set(self) -> Optional[set[str]]:
+        if (
+            self.num_sample_sets_collected < 10
+            or not self.is_attack_completed()
+        ):
+            return None
 
         return self.get_target_server_id_set()
 
@@ -573,6 +579,65 @@ class DisclosureAttack_wOutlierDetection(DisclosureAttack_wBayesianEstimate):
             for server_id, signal in server_id_to_signal_map.items()
             if signal >= self.detection_threshold
         ]
+
+
+class DisclosureAttack_wOutlierDetection_wEarlyTermination(DisclosureAttack_wOutlierDetection):
+    def __init__(
+        self,
+        env: simpy.Environment,
+        max_msg_delivery_time: float,
+        max_stdev: float,
+        detection_threshold: float,
+        num_servers_to_exclude_from_threshold: int,
+    ):
+        super().__init__(
+            env=env,
+            max_msg_delivery_time=max_msg_delivery_time,
+            max_stdev=max_stdev,
+            detection_threshold=detection_threshold,
+        )
+        self.num_servers_to_exclude_from_threshold = num_servers_to_exclude_from_threshold
+
+    def __repr__(self):
+        return "DisclosureAttack_wOutlierDetection_wEarlyTermination"
+
+    def is_attack_completed(self) -> bool:
+        server_id_to_p_rv_map = self.get_server_id_to_p_rv_map()
+        server_id_to_p_baseline_rv_map = self.get_server_id_to_p_baseline_rv_map()
+        log(
+            INFO, "",
+            # server_id_to_p_rv_map=server_id_to_p_rv_map,
+            # server_id_to_p_baseline_rv_map=server_id_to_p_baseline_rv_map,
+            avg_p_rv_mean=self.get_avg_p_rv_mean(),
+            avg_p_baseline_rv_mean=self.get_avg_p_baseline_rv_mean(),
+        )
+
+        num_servers_w_large_stdev = 0
+        for server_id in (
+            set(server_id_to_p_rv_map.keys())
+            | set(server_id_to_p_baseline_rv_map.keys())
+        ):
+            stdev = server_id_to_p_rv_map[server_id].stdev() if server_id in server_id_to_p_rv_map else float("Inf")
+            stdev_baseline = server_id_to_p_baseline_rv_map[server_id].stdev() if server_id in server_id_to_p_baseline_rv_map else float("Inf")
+
+            if (
+                stdev is None or numpy.isnan(stdev)
+                or stdev_baseline is None or numpy.isnan(stdev_baseline)
+                or stdev > self.max_stdev
+                or stdev_baseline > self.max_stdev
+            ):
+                log(
+                    DEBUG, f"> server_id= {server_id}",
+                    stdev=stdev,
+                    stdev_baseline=stdev_baseline,
+                    max_stdev=self.max_stdev,
+                )
+                num_servers_w_large_stdev += 1
+
+        if num_servers_w_large_stdev <= self.num_servers_to_exclude_from_threshold:
+            return True
+
+        return False
 
 
 @dataclasses.dataclass

@@ -54,6 +54,27 @@ def get_adversary(
             ),
         )
 
+    elif "num_servers_to_exclude_from_threshold" in kwargs:
+        analytical_model = model_w_rounds.Model_wRounds(
+            num_clients=kwargs["num_clients"],
+            num_servers=kwargs["num_servers"],
+            num_target_servers=kwargs["num_target_servers"],
+            prob_server_active=kwargs["prob_server_active"],
+            prob_attack_round=kwargs["prob_attack_round"],
+        )
+        detection_gap_exp_factor = kwargs["detection_gap_exp_factor"]
+        return disclosure_attack.DisclosureAttack_wOutlierDetection_wEarlyTermination(
+            env=env,
+            max_msg_delivery_time=max_msg_delivery_time,
+            max_stdev=analytical_model.max_stdev_of_prob_estimates(
+                detection_gap_exp_factor=detection_gap_exp_factor,
+            ),
+            detection_threshold=analytical_model.detection_threshold(
+                detection_gap_exp_factor=detection_gap_exp_factor,
+            ),
+            num_servers_to_exclude_from_threshold=kwargs["num_servers_to_exclude_from_threshold"],
+        )
+
     else:
         log(ERROR, "", kwargs=kwargs)
         raise ValueError("Unexpected kwargs")
