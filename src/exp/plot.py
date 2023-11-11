@@ -84,14 +84,12 @@ def get_title_and_plot_name_tail(
     plot_name_tail += f"_ntarget_{num_target_servers}"
 
     if w_model:
-        title += (
-            r"$p_{\mathrm{server}} =$" + fr"${kwargs['prob_server_active']}$, "
-            r"$p_{\mathrm{client}} =$" + fr"${kwargs['prob_attack_round']}$, "
-        )
-        plot_name_tail += (
-            f"_pserver_{kwargs['prob_server_active']}"
-            f"_pattackround_{kwargs['prob_attack_round']}"
-        )
+        if "prob_server_active" in kwargs:
+            title += r"$p_{\mathrm{server}} =$" + fr"${kwargs['prob_server_active']}$, "
+            plot_name_tail += f"_pserver_{kwargs['prob_server_active']}"
+
+        title += r"$p_{\mathrm{client}} =$" + fr"${kwargs['prob_attack_round']}$, "
+        plot_name_tail += f"_pattackround_{kwargs['prob_attack_round']}"
 
     else:
         title += (
@@ -283,6 +281,62 @@ def plot_perf_vs_num_servers_excluded_from_threshold(
         x_label=r"$N_{\mathrm{server-excluded}}$",
         title=title,
         plot_name=f"plot_perf_vs_num_servers_excluded_from_threshold_{plot_name_tail}",
+    )
+
+    log(INFO, "Done")
+
+
+def plot_perf_vs_prob_server_active(
+    prob_server_active_list: list[float],
+    num_servers: int,
+    num_target_servers: int,
+    num_samples: int,
+    w_model: bool,
+    network_delay_rv: random_variable.RandomVariable = None,
+    idle_time_rv: random_variable.RandomVariable = None,
+    idle_time_rv_for_target_client: random_variable.RandomVariable = None,
+    num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable = None,
+    prob_server_active: float = None,
+    prob_attack_round: float = None,
+    **kwargs,
+):
+    def disclosure_attack_result_given_x_func(
+        prob_server_active: float,
+    ) -> disclosure_attack.DisclosureAttackResult:
+        return sim_module.sim_w_disclosure_attack_w_joblib(
+            num_clients=num_servers,
+            num_servers=num_servers,
+            num_target_servers=num_target_servers,
+            num_samples=num_samples,
+            w_model=w_model,
+            network_delay_rv=network_delay_rv,
+            idle_time_rv=idle_time_rv,
+            idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+            num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+            prob_server_active=prob_server_active,
+            prob_attack_round=prob_attack_round,
+            **kwargs,
+        )
+
+    title, plot_name_tail = get_title_and_plot_name_tail(
+        w_model=w_model,
+        num_target_servers=num_target_servers,
+        num_samples=num_samples,
+        num_servers=num_servers,
+        network_delay_rv=network_delay_rv,
+        idle_time_rv=idle_time_rv,
+        idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+        num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
+        prob_attack_round=prob_attack_round,
+        **kwargs,
+    )
+
+    plot_perf(
+        x_list=prob_server_active_list,
+        disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
+        x_label=r"$p_{\mathrm{server}}$",
+        title=title,
+        plot_name=f"plot_perf_vs_prob_server_active_{plot_name_tail}",
     )
 
     log(INFO, "Done")
