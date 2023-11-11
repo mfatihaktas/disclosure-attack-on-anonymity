@@ -1,16 +1,22 @@
+import numpy
+
 from src.exp import plot
 from src.prob import random_variable
 
 
 if __name__ == "__main__":
-    prob_server_active_list = [0.5]
-    # prob_server_active_list = list(numpy.linspace(0.1, 0,5, num=5, endpoint=True))
+    # prob_server_active_list = [0.5]
+    # prob_server_active_list = list(numpy.linspace(0.1, 0.5, num=5, endpoint=True))
+    prob_server_active_list = list(numpy.linspace(0.1, 0.9, num=10, endpoint=True))
+
     detection_gap_exp_factor = 0.5
     # detection_gap_exp_factor = 1.2
+    # detection_gap_exp_factor = 1.5
+    # detection_gap_exp_factor = 2
 
     num_servers = 50
     num_target_servers = 2
-    num_samples = 1  # 3  # 5
+    num_samples = 3  # 5
     # w_model = False
     w_model = True
 

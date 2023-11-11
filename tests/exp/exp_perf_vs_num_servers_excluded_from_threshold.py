@@ -3,13 +3,18 @@ from src.prob import random_variable
 
 
 if __name__ == "__main__":
-    num_servers_excluded_from_threshold_list = [1]
+    # num_servers_excluded_from_threshold_list = [1]
     # num_servers_excluded_from_threshold_list = [0, 1, 2]
     # num_servers_excluded_from_threshold_list = list(range(10))
-    detection_gap_exp_factor = 0.5
-    # detection_gap_exp_factor = 1.2
+    num_servers_excluded_from_threshold_list = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 49]
+    # detection_gap_exp_factor = 0.5
+    # detection_gap_exp_factor = 0.8
+    # detection_gap_exp_factor = 1
+    # detection_gap_exp_factor = 1.5
+    # detection_gap_exp_factor = 2.1
+    detection_gap_exp_factor = 3
 
-    num_servers = 100
+    num_servers = 50
     num_target_servers = 2
     num_samples = 3  # 5
     # w_model = False
