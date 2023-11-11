@@ -634,10 +634,10 @@ class DisclosureAttack_wOutlierDetection_wEarlyTermination(DisclosureAttack_wOut
                 )
                 num_servers_w_large_stdev += 1
 
-        if num_servers_w_large_stdev <= self.num_servers_to_exclude_from_threshold:
-            return True
+            if num_servers_w_large_stdev > self.num_servers_to_exclude_from_threshold:
+                return False
 
-        return False
+        return True
 
 
 @dataclasses.dataclass
