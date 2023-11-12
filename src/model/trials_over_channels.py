@@ -1,7 +1,9 @@
 import collections
+import numpy
 import random
 
 from src.debug_utils import log, INFO
+from src.plot_utils import NICE_BLUE, plot
 
 
 def sample_num_trials_until_k_successes(k: int, p: float) -> int:
@@ -62,3 +64,53 @@ def sim_sorted_num_trials_over_channels_until_m_channels_reach_k_successes(
             sorted_num_trials_list[i].append(sorted_num_trials[i])
 
     return sorted_num_trials_list
+
+
+def plot_sorted_num_trials_over_channels(
+    n: int,
+    m: int,
+    k: int,
+    p: float,
+    num_samples: int,
+):
+    log(INFO, "Started", n=n, m=m, k=k, p=p, num_samples=num_samples)
+
+    sorted_num_trials_over_channels = sim_sorted_num_trials_over_channels_until_m_channels_reach_k_successes(
+        n=n, m=m, k=k, p=p, num_samples=num_samples
+    )
+    E_num_trials_list = [
+        numpy.mean(ls) for ls in sorted_num_trials_over_channels
+    ]
+    stdev_num_trials_list = [
+        numpy.std(ls) for ls in sorted_num_trials_over_channels
+    ]
+
+    # Plot
+    fontsize = 14
+
+    x_list = list(range(1, n + 1))
+    plot.errorbar(x_list, E_num_trials_list, yerr=stdev_num_trials_list, color=NICE_BLUE, marker="o")
+    plot.xlabel("Order index", fontsize=fontsize)
+    plot.ylabel("Number of trials", fontsize=fontsize)
+
+    title = (
+        fr"$n = {n}$, "
+        fr"$m = {m}$, "
+        fr"$k = {k}$, "
+        fr"$p = {p}$, "
+        r"$N_{\mathrm{samples}} =$" + fr"${num_samples}$"
+    )
+    plot.title(title, fontsize=fontsize)  # , y=1.1
+
+    plot.gcf().set_size_inches(6, 4)
+    plot_name = (
+        "plot_sorted_num_trials_over_channels"
+        f"_n_{n}"
+        f"_m_{m}"
+        f"_k_{k}"
+        f"_p_{round(p, 2)}"
+    )
+    plot.savefig(f"plots/{plot_name}.pdf", bbox_inches="tight")
+    plot.gcf().clear()
+
+    log(INFO, "Done")
