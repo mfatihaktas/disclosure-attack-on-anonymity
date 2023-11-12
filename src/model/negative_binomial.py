@@ -1,8 +1,10 @@
 import collections
 import random
 
+from src.debug_utils import log, INFO
 
-def sim_num_trials_until_k_successes(k: int, p: float) -> int:
+
+def sample_num_trials_until_k_successes(k: int, p: float) -> int:
     num_trials = 0
     num_successes = 0
     while num_successes < k:
@@ -14,12 +16,12 @@ def sim_num_trials_until_k_successes(k: int, p: float) -> int:
     return num_trials
 
 
-def sim_sorted_num_trials_over_channels_until_m_channels_reach_k_successes(
+def sample_sorted_num_trials_over_channels_until_m_channels_reach_k_successes(
     n: int,
     m: int,
     k: int,
     p: float,
-) -> int:
+) -> list[int]:
     channel_id_to_num_successes_map = collections.defaultdict(int)
 
     num_trails = 0
@@ -38,3 +40,25 @@ def sim_sorted_num_trials_over_channels_until_m_channels_reach_k_successes(
         num_trails += 1
 
     return sorted(channel_id_to_num_successes_map.values())
+
+
+def sim_sorted_num_trials_over_channels_until_m_channels_reach_k_successes(
+    n: int,
+    m: int,
+    k: int,
+    p: float,
+    num_samples: int,
+) -> list[int]:
+    sorted_num_trials_list = [[] for _ in range(n)]
+
+    for s in range(num_samples):
+        log(INFO, f">> s= {s}")
+
+        sorted_num_trials = sample_sorted_num_trials_over_channels_until_m_channels_reach_k_successes(
+            n=n, m=m, k=k, p=p,
+        )
+
+        for i in range(n):
+            sorted_num_trials_list[i].append(sorted_num_trials[i])
+
+    return sorted_num_trials_list
