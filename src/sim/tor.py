@@ -22,8 +22,8 @@ class TorSystem():
         num_servers: int,
         num_target_servers: int,
         network_delay_rv: random_variable.RandomVariable,
-        idle_time_rv: random_variable.RandomVariable,
-        idle_time_rv_for_target_client: random_variable.RandomVariable,
+        client_idle_time_rv: random_variable.RandomVariable,
+        target_client_idle_time_rv: random_variable.RandomVariable,
         num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     ):
         check(num_target_servers <= num_servers, "")
@@ -33,8 +33,8 @@ class TorSystem():
         self.num_servers = num_servers
         self.num_target_servers = num_target_servers
         self.network_delay_rv = network_delay_rv
-        self.idle_time_rv = idle_time_rv
-        self.idle_time_rv_for_target_client = idle_time_rv_for_target_client
+        self.client_idle_time_rv = client_idle_time_rv
+        self.target_client_idle_time_rv = target_client_idle_time_rv
         self.num_msgs_to_recv_for_get_request_rv = num_msgs_to_recv_for_get_request_rv
 
         # Network
@@ -66,7 +66,7 @@ class TorSystem():
                         self.server_list[j % num_servers]._id
                         for j in range(num_target_servers)
                     ],
-                    idle_time_rv=idle_time_rv_for_target_client,
+                    client_idle_time_rv=target_client_idle_time_rv,
                     num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
                 )
 
@@ -75,7 +75,7 @@ class TorSystem():
                     env=self.env,
                     _id=f"c{i}",
                     server_id_list=[self.server_list[i % num_servers]._id],
-                    idle_time_rv=idle_time_rv_for_target_client,
+                    client_idle_time_rv=target_client_idle_time_rv,
                     num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
                 )
 
@@ -88,7 +88,7 @@ class TorSystem():
             f"\t num_clients= {self.num_clients} \n"
             f"\t num_servers= {self.num_servers} \n"
             f"\t network_delay_rv= {self.network_delay_rv} \n"
-            f"\t idle_time_rv= {self.idle_time_rv} \n"
+            f"\t client_idle_time_rv= {self.client_idle_time_rv} \n"
             f"\t num_msgs_to_recv_for_get_request_rv= {self.num_msgs_to_recv_for_get_request_rv} \n"
             f"\t network= {self.network} \n"
             ")"
@@ -125,8 +125,8 @@ def sim_w_disclosure_attack_w_joblib(
     num_clients: int,
     num_servers: int,
     network_delay_rv: random_variable.RandomVariable,
-    idle_time_rv: random_variable.RandomVariable,
-    idle_time_rv_for_target_client: random_variable.RandomVariable,
+    client_idle_time_rv: random_variable.RandomVariable,
+    target_client_idle_time_rv: random_variable.RandomVariable,
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     num_target_servers: int,
     stability_threshold: float,
@@ -147,8 +147,8 @@ def sim_w_disclosure_attack_w_joblib(
             num_clients=num_clients,
             num_servers=num_servers,
             network_delay_rv=network_delay_rv,
-            idle_time_rv=idle_time_rv,
-            idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+            client_idle_time_rv=client_idle_time_rv,
+            target_client_idle_time_rv=target_client_idle_time_rv,
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             num_target_servers=num_target_servers,
         )

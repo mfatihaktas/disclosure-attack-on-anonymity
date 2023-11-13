@@ -14,12 +14,12 @@ class Client(node.Node):
         env: simpy.Environment,
         _id: str,
         server_id_list: list[int],
-        idle_time_rv: random_variable.RandomVariable,
+        client_idle_time_rv: random_variable.RandomVariable,
         num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     ):
         super().__init__(env=env, _id=_id)
         self.server_id_list = server_id_list
-        self.idle_time_rv = idle_time_rv
+        self.client_idle_time_rv = client_idle_time_rv
         self.num_msgs_to_recv_for_get_request_rv = num_msgs_to_recv_for_get_request_rv
 
         # To be set while getting connected to the network
@@ -39,7 +39,7 @@ class Client(node.Node):
             "Client( \n"
             f"{super().__repr__()} \n"
             f"\t server_id_list= {self.server_id_list} \n"
-            f"\t idle_time_rv= {self.idle_time_rv} \n"
+            f"\t client_idle_time_rv= {self.client_idle_time_rv} \n"
             ")"
         )
 
@@ -71,7 +71,7 @@ class Client(node.Node):
             yield self.token_store.get()
 
             # Wait idle
-            idle_time = self.idle_time_rv.sample()
+            idle_time = self.client_idle_time_rv.sample()
             slog(
                 DEBUG, self.env, self, "waiting idle", idle_time=idle_time
             )

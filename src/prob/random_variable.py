@@ -123,6 +123,29 @@ class Exponential(RandomVariable):
         return self.D + random.expovariate(self.mu)
 
 
+class Poisson(RandomVariable):
+    def __init__(self, mu: float):
+        super().__init__(min_value=0, max_value=numpy.inf)
+        self.mu = mu
+
+        self.dist = scipy.stats.poisson(mu)
+
+    def __repr__(self):
+        return f"Poisson(mu= {self.mu})"
+
+    def to_latex(self) -> str:
+        return r"{}(\mu={})".format("\mathrm{Poisson}", self.mu)
+
+    def tail_prob(self, x: float) -> float:
+        return 1 - self.cdf(x)
+
+    def cdf(self, x: float) -> float:
+        return self.dist.cdf(x)
+
+    def sample(self) -> int:
+        return self.dist.rvs()
+
+
 class Uniform(RandomVariable):
     def __init__(self, min_value: float, max_value: float):
         super().__init__(min_value=min_value, max_value=max_value)

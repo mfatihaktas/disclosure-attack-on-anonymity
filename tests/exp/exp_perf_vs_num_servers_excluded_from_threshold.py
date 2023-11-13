@@ -21,9 +21,9 @@ if __name__ == "__main__":
     w_model = True
 
     network_delay_rv = random_variable.Uniform(min_value=1, max_value=5)
-    # idle_time_rv = random_variable.Exponential(mu=1)
-    idle_time_rv = random_variable.Uniform(min_value=0, max_value=1)
-    idle_time_rv_for_target_client = random_variable.Uniform(min_value=4, max_value=6)
+    # client_idle_time_rv = random_variable.Exponential(mu=1)
+    client_idle_time_rv = random_variable.Uniform(min_value=0, max_value=1)
+    target_client_idle_time_rv = random_variable.Uniform(min_value=4, max_value=6)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
 
     prob_server_active = 0.5
@@ -36,8 +36,8 @@ if __name__ == "__main__":
         num_samples=num_samples,
         w_model=w_model,
         network_delay_rv=network_delay_rv,
-        idle_time_rv=idle_time_rv,
-        idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+        client_idle_time_rv=client_idle_time_rv,
+        target_client_idle_time_rv=target_client_idle_time_rv,
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         prob_server_active=prob_server_active,
         prob_attack_round=prob_attack_round,

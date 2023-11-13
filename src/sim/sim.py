@@ -85,8 +85,8 @@ def sim_tor(
     num_servers: int,
     num_target_servers: int,
     network_delay_rv: random_variable.RandomVariable,
-    idle_time_rv: random_variable.RandomVariable,
-    idle_time_rv_for_target_client: random_variable.RandomVariable,
+    client_idle_time_rv: random_variable.RandomVariable,
+    target_client_idle_time_rv: random_variable.RandomVariable,
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
     num_samples: int,
     **kwargs,
@@ -98,6 +98,9 @@ def sim_tor(
     adversary = get_adversary(
         env=env,
         max_msg_delivery_time=max_msg_delivery_time,
+        num_clients=num_clients,
+        num_servers=num_servers,
+        num_target_servers=num_target_servers,
         **kwargs,
     )
 
@@ -107,8 +110,8 @@ def sim_tor(
         num_servers=num_servers,
         num_target_servers=num_target_servers,
         network_delay_rv=network_delay_rv,
-        idle_time_rv=idle_time_rv,
-        idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+        client_idle_time_rv=client_idle_time_rv,
+        target_client_idle_time_rv=target_client_idle_time_rv,
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
     )
 
@@ -183,8 +186,8 @@ def sim_w_disclosure_attack_w_joblib(
     num_samples: int,
     w_model: bool,
     network_delay_rv: random_variable.RandomVariable = None,
-    idle_time_rv: random_variable.RandomVariable = None,
-    idle_time_rv_for_target_client: random_variable.RandomVariable = None,
+    client_idle_time_rv: random_variable.RandomVariable = None,
+    target_client_idle_time_rv: random_variable.RandomVariable = None,
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable = None,
     prob_server_active: bool = None,
     prob_attack_round: bool = None,
@@ -217,8 +220,8 @@ def sim_w_disclosure_attack_w_joblib(
                     num_clients=num_clients,
                     num_servers=num_servers,
                     network_delay_rv=network_delay_rv,
-                    idle_time_rv=idle_time_rv,
-                    idle_time_rv_for_target_client=idle_time_rv_for_target_client,
+                    client_idle_time_rv=client_idle_time_rv,
+                    target_client_idle_time_rv=target_client_idle_time_rv,
                     num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
                     num_target_servers=num_target_servers,
                     num_samples=num_samples,

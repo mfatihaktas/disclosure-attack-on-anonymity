@@ -32,7 +32,7 @@ def num_target_servers(request) -> int:
         random_variable.Exponential(mu=1),
     ],
 )
-def idle_time_rv(request) -> random_variable.RandomVariable:
+def client_idle_time_rv(request) -> random_variable.RandomVariable:
     return request.param
 
 
@@ -58,7 +58,7 @@ def tor_system(
     num_servers: int,
     num_target_servers: int,
     network_delay_rv: random_variable.RandomVariable,
-    idle_time_rv: random_variable.RandomVariable,
+    client_idle_time_rv: random_variable.RandomVariable,
     num_msgs_to_recv_for_get_request_rv: random_variable.RandomVariable,
 ) -> tor_module.TorSystem:
     return tor_module.TorSystem(
@@ -66,7 +66,7 @@ def tor_system(
         num_clients=num_clients,
         num_servers=num_servers,
         network_delay_rv=network_delay_rv,
-        idle_time_rv=idle_time_rv,
+        client_idle_time_rv=client_idle_time_rv,
         num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         num_target_servers=num_target_servers,
     )
