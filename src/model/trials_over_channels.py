@@ -91,7 +91,7 @@ def plot_sorted_num_trials_over_channels(
     x_list = list(range(1, n + 1))
     plot.errorbar(x_list, E_num_trials_list, yerr=stdev_num_trials_list, color=NICE_BLUE, marker="o")
     plot.xlabel("Order index", fontsize=fontsize)
-    plot.ylabel("Number of trials", fontsize=fontsize)
+    plot.ylabel("Number of successes", fontsize=fontsize)
 
     title = (
         fr"$n = {n}$, "
