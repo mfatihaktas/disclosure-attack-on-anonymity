@@ -7,7 +7,7 @@ from src.attack import (
     disclosure_attack,
 )
 from src.debug_utils import check, DEBUG, ERROR, INFO, log
-from src.model import model_w_rounds
+from src.model import markovian_model, model_w_rounds
 from src.prob import random_variable
 from src.sim import (
     tor as tor_module,
@@ -20,6 +20,46 @@ def get_adversary(
     max_msg_delivery_time: float,
     **kwargs,
 ) -> adversary_module.Adversary:
+    if (
+        "detection_gap_exp_factor" in kwargs
+        or "num_servers_to_exclude_from_threshold" in kwargs
+    ):
+        if (
+            "prob_server_active" in kwargs
+            and "prob_attack_round" in kwargs
+        ):
+            prob_server_active = kwargs["prob_server_active"]
+            prob_attack_round = kwargs["prob_attack_round"]
+        elif (
+            "network_delay_rv" in kwargs
+            and "client_idle_time_rv" in kwargs
+            and "target_client_idle_time_rv" in kwargs
+            and "num_msgs_to_recv_for_get_request_rv" in kwargs
+        ):
+            prob_server_active = markovian_model.prob_server_active(
+                network_delay_rv=kwargs["network_delay_rv"],
+                client_idle_time_rv=kwargs["client_idle_time_rv"],
+                num_msgs_to_recv_for_get_request_rv=kwargs["num_msgs_to_recv_for_get_request_rv"],
+            )
+            prob_attack_round = markovian_model.prob_attack_round(
+                network_delay_rv=kwargs["network_delay_rv"],
+                target_client_idle_time_rv=kwargs["target_client_idle_time_rv"],
+                num_msgs_to_recv_for_get_request_rv=kwargs["num_msgs_to_recv_for_get_request_rv"],
+            )
+
+        log(
+            INFO, "",
+            prob_server_active=prob_server_active,
+            prob_attack_round=prob_attack_round,
+        )
+        analytical_model = model_w_rounds.Model_wRounds(
+            num_clients=kwargs["num_clients"],
+            num_servers=kwargs["num_servers"],
+            num_target_servers=kwargs["num_target_servers"],
+            prob_server_active=prob_server_active,
+            prob_attack_round=prob_attack_round,
+        )
+
     if "stability_threshold" in kwargs:
         return disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
@@ -35,13 +75,6 @@ def get_adversary(
         )
 
     elif "detection_gap_exp_factor" in kwargs:
-        analytical_model = model_w_rounds.Model_wRounds(
-            num_clients=kwargs["num_clients"],
-            num_servers=kwargs["num_servers"],
-            num_target_servers=kwargs["num_target_servers"],
-            prob_server_active=kwargs["prob_server_active"],
-            prob_attack_round=kwargs["prob_attack_round"],
-        )
         detection_gap_exp_factor = kwargs["detection_gap_exp_factor"]
         return disclosure_attack.DisclosureAttack_wOutlierDetection(
             env=env,
@@ -55,13 +88,6 @@ def get_adversary(
         )
 
     elif "num_servers_to_exclude_from_threshold" in kwargs:
-        analytical_model = model_w_rounds.Model_wRounds(
-            num_clients=kwargs["num_clients"],
-            num_servers=kwargs["num_servers"],
-            num_target_servers=kwargs["num_target_servers"],
-            prob_server_active=kwargs["prob_server_active"],
-            prob_attack_round=kwargs["prob_attack_round"],
-        )
         detection_gap_exp_factor = kwargs["detection_gap_exp_factor"]
         return disclosure_attack.DisclosureAttack_wOutlierDetection_wEarlyTermination(
             env=env,
@@ -101,6 +127,10 @@ def sim_tor(
         num_clients=num_clients,
         num_servers=num_servers,
         num_target_servers=num_target_servers,
+        network_delay_rv=network_delay_rv,
+        client_idle_time_rv=client_idle_time_rv,
+        target_client_idle_time_rv=target_client_idle_time_rv,
+        num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
         **kwargs,
     )
 

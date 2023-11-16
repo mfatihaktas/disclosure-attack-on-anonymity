@@ -14,10 +14,13 @@ if __name__ == "__main__":
     w_model = False
     # w_model = True
 
-    network_delay_rv = random_variable.Uniform(min_value=1, max_value=5)
-    # client_idle_time_rv = random_variable.Exponential(mu=1)
-    client_idle_time_rv = random_variable.Uniform(min_value=0, max_value=1)
-    target_client_idle_time_rv = random_variable.Uniform(min_value=4, max_value=6)
+    # network_delay_rv = random_variable.Uniform(min_value=1, max_value=5)
+    network_delay_rv = random_variable.Uniform(min_value=1, max_value=1)
+    # client_idle_time_rv = random_variable.Uniform(min_value=0, max_value=1)
+    mu = 1  # 0.05
+    client_idle_time_rv = random_variable.Exponential(mu=mu)
+    # target_client_idle_time_rv = random_variable.Uniform(min_value=4, max_value=6)
+    target_client_idle_time_rv = random_variable.Exponential(mu=mu/2)
     num_msgs_to_recv_for_get_request_rv = random_variable.DiscreteUniform(min_value=1, max_value=1)
 
     prob_server_active = 0.5
