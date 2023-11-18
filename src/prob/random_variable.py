@@ -79,7 +79,8 @@ class Exponential(RandomVariable):
         self.mu = mu
 
     def __repr__(self):
-        return "Exponential( \n" f"\t D= {self.D} \n" f"\t mu= {self.mu} \n" ") \n"
+        # return "Exponential( \n" f"\t D= {self.D} \n" f"\t mu= {self.mu} \n" ") \n"
+        return f"Exponential({self.mu})"
 
     def to_latex(self) -> str:
         if self.D == 0:
