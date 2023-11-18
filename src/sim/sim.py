@@ -117,16 +117,13 @@ def sim_tor(
     num_samples: int,
     **kwargs,
 ):
-    if "max_msg_delivery_time" in kwargs:
-        max_msg_delivery_time = kwargs["max_msg_delivery_time"]
-    else:
-        max_msg_delivery_time = network_delay_rv.max_value
+    if "max_msg_delivery_time" not in kwargs:
+        kwargs["max_msg_delivery_time"] = network_delay_rv.max_value
 
     env = simpy.Environment()
 
     adversary = get_adversary(
         env=env,
-        max_msg_delivery_time=max_msg_delivery_time,
         num_clients=num_clients,
         num_servers=num_servers,
         num_target_servers=num_target_servers,
