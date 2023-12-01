@@ -75,7 +75,7 @@ class TorSystem():
                     env=self.env,
                     _id=f"c{i}",
                     server_id_list=[self.server_list[i % num_servers]._id],
-                    client_idle_time_rv=target_client_idle_time_rv,
+                    client_idle_time_rv=client_idle_time_rv,
                     num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
                 )
 
