@@ -21,11 +21,11 @@ class DisclosureAttack(adversary_module.Adversary):
     def __init__(
         self,
         env: simpy.Environment,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
         error_percent: float,
     ):
         self.env = env
-        self.max_msg_delivery_time = max_msg_delivery_time
+        self.max_delivery_time_for_adversary = max_delivery_time_for_adversary
         self.error_percent = error_percent
 
         self.server_id_to_time_epochs_msg_sent_map = collections.defaultdict(list)
@@ -161,7 +161,7 @@ class DisclosureAttack(adversary_module.Adversary):
         self,
         num_msgs_recved_for_get_request: int,
     ) -> set[str]:
-        min_time_epoch = self.env.now - self.max_msg_delivery_time
+        min_time_epoch = self.env.now - self.max_delivery_time_for_adversary
         sample_candidate_set = set()
         for server_id, time_epochs_msg_sent in self.server_id_to_time_epochs_msg_sent_map.items():
             if not time_epochs_msg_sent:
@@ -180,7 +180,7 @@ class DisclosureAttack(adversary_module.Adversary):
         return sample_candidate_set
 
     def trim_server_id_to_time_epochs_msg_sent_map(self):
-        min_time_epoch = self.env.now - self.max_msg_delivery_time
+        min_time_epoch = self.env.now - self.max_delivery_time_for_adversary
         for server_id, time_epochs_msg_sent in self.server_id_to_time_epochs_msg_sent_map.items():
             left_index = bisect.bisect_left(time_epochs_msg_sent, min_time_epoch)
             self.server_id_to_time_epochs_msg_sent_map[server_id] = time_epochs_msg_sent[left_index:]
@@ -190,11 +190,11 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
     def __init__(
         self,
         env: simpy.Environment,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
     ):
         super().__init__(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             error_percent=None,
         )
 
@@ -215,7 +215,7 @@ class DisclosureAttack_wBaselineInspection(DisclosureAttack):
         }
 
     def baseline_inspection(self):
-        interval_rv = random_variable.Exponential(mu=2 / self.max_msg_delivery_time)
+        interval_rv = random_variable.Exponential(mu=2 / self.max_delivery_time_for_adversary)
 
         num_msgs_recved_for_get_request = 1
         while True:
@@ -258,12 +258,12 @@ class DisclosureAttack_wBaselineInspection_wStationaryRounds(DisclosureAttack_wB
     def __init__(
         self,
         env: simpy.Environment,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
         stability_threshold: float,
     ):
         super().__init__(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
         )
         self.stability_threshold = stability_threshold
 
@@ -341,7 +341,7 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
     def __init__(
         self,
         env: simpy.Environment,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
         max_stdev: float,
         detection_threshold: float,
     ):
@@ -350,7 +350,7 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
 
         super().__init__(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
         )
         self.max_stdev = max_stdev
         self.detection_threshold = detection_threshold
@@ -391,7 +391,7 @@ class DisclosureAttack_wBayesianEstimate(DisclosureAttack_wBaselineInspection):
         )
 
     def baseline_inspection(self):
-        interval_rv = random_variable.Exponential(mu=3 / self.max_msg_delivery_time)
+        interval_rv = random_variable.Exponential(mu=3 / self.max_delivery_time_for_adversary)
 
         num_msgs_recved_for_get_request = 1
         while True:
@@ -558,13 +558,13 @@ class DisclosureAttack_wOutlierDetection(DisclosureAttack_wBayesianEstimate):
     def __init__(
         self,
         env: simpy.Environment,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
         max_stdev: float,
         detection_threshold: float,
     ):
         super().__init__(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             max_stdev=max_stdev,
             detection_threshold=detection_threshold,
         )
@@ -585,14 +585,14 @@ class DisclosureAttack_wOutlierDetection_wEarlyTermination(DisclosureAttack_wOut
     def __init__(
         self,
         env: simpy.Environment,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
         max_stdev: float,
         detection_threshold: float,
         num_servers_to_exclude_from_threshold: int,
     ):
         super().__init__(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             max_stdev=max_stdev,
             detection_threshold=detection_threshold,
         )

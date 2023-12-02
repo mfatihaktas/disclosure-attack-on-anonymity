@@ -78,7 +78,7 @@ def test_DisclosureAttack(
     env = tor_system.env
     adversary = disclosure_attack.DisclosureAttack(
         env=env,
-        max_msg_delivery_time=tor_system.network_delay_rv.max_value,
+        max_delivery_time_for_adversary=tor_system.network_delay_rv.max_value,
         error_percent=0.1,
     )
 
@@ -93,7 +93,7 @@ def test_DisclosureAttack_wBaselineInspection_wStationaryRounds(
     env = tor_system.env
     adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
         env=env,
-        max_msg_delivery_time=tor_system.network_delay_rv.max_value,
+        max_delivery_time_for_adversary=tor_system.network_delay_rv.max_value,
         stability_threshold=0.003,
     )
 

@@ -4,7 +4,7 @@ from src.prob import random_variable
 
 if __name__ == "__main__":
     max_delivery_time = 1  # 4
-    max_msg_delivery_time_list = list(range(1, max_delivery_time + 1))
+    max_delivery_time_for_adversary_list = list(range(1, max_delivery_time + 1))
     # detection_gap_exp_factor = 0.5
     # detection_gap_exp_factor = 0.8
     detection_gap_exp_factor = 1
@@ -26,8 +26,8 @@ if __name__ == "__main__":
     prob_server_active = 0.5
     prob_attack_round = 0.5
 
-    plot.plot_perf_vs_max_msg_delivery_time(
-        max_msg_delivery_time_list=max_msg_delivery_time_list,
+    plot.plot_perf_vs_max_delivery_time_for_adversary(
+        max_delivery_time_for_adversary_list=max_delivery_time_for_adversary_list,
         num_servers=num_servers,
         num_target_servers=num_target_servers,
         num_samples=num_samples,

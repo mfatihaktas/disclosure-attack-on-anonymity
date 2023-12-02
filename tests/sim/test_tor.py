@@ -39,7 +39,7 @@ def test_time_to_deanonymize_w_intersection_attack(
 
     adversary = intersection_attack.Adversary_wIntersectionAttack(
         env=env,
-        max_msg_delivery_time=network_delay_rv.max_value,
+        max_delivery_time_for_adversary=network_delay_rv.max_value,
         num_target_client=1,
     )
 

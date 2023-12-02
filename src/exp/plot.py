@@ -342,8 +342,8 @@ def plot_perf_vs_prob_server_active(
     log(INFO, "Done")
 
 
-def plot_perf_vs_max_msg_delivery_time(
-    max_msg_delivery_time_list: list[float],
+def plot_perf_vs_max_delivery_time_for_adversary(
+    max_delivery_time_for_adversary_list: list[float],
     num_servers: int,
     num_target_servers: int,
     num_samples: int,
@@ -357,7 +357,7 @@ def plot_perf_vs_max_msg_delivery_time(
     **kwargs,
 ):
     def disclosure_attack_result_given_x_func(
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
     ) -> disclosure_attack.DisclosureAttackResult:
         return sim_module.sim_w_disclosure_attack_w_joblib(
             num_clients=num_servers,
@@ -371,7 +371,7 @@ def plot_perf_vs_max_msg_delivery_time(
             num_msgs_to_recv_for_get_request_rv=num_msgs_to_recv_for_get_request_rv,
             prob_server_active=prob_server_active,
             prob_attack_round=prob_attack_round,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             **kwargs,
         )
 
@@ -390,11 +390,11 @@ def plot_perf_vs_max_msg_delivery_time(
     )
 
     plot_perf(
-        x_list=max_msg_delivery_time_list,
+        x_list=max_delivery_time_for_adversary_list,
         disclosure_attack_result_given_x_func=disclosure_attack_result_given_x_func,
-        x_label=r"$\Delta$",
+        x_label=r"$\Delta_{\mathrm{adversary}}$",
         title=title,
-        plot_name=f"plot_perf_vs_max_msg_delivery_time_{plot_name_tail}",
+        plot_name=f"plot_perf_vs_max_delivery_time_for_adversary_{plot_name_tail}",
     )
 
     log(INFO, "Done")

@@ -138,7 +138,7 @@ def sim_w_disclosure_attack_w_joblib(
         # adversary = disclosure_attack.DisclosureAttack(
         adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
-            max_msg_delivery_time=network_delay_rv.max_value,
+            max_delivery_time_for_adversary=network_delay_rv.max_value,
             stability_threshold=stability_threshold,
         )
 

@@ -17,7 +17,7 @@ from src.sim import (
 
 def get_adversary(
     env: simpy.Environment,
-    max_msg_delivery_time: float,
+    max_delivery_time_for_adversary: float,
     **kwargs,
 ) -> adversary_module.Adversary:
     if (
@@ -63,14 +63,14 @@ def get_adversary(
     if "stability_threshold" in kwargs:
         return disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             stability_threshold=kwargs["stability_threshold"],
         )
 
     elif "max_stdev" in kwargs:
         return disclosure_attack.DisclosureAttack_wOutlierDetection(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             max_stdev=kwargs["max_stdev"],
         )
 
@@ -78,7 +78,7 @@ def get_adversary(
         detection_gap_exp_factor = kwargs["detection_gap_exp_factor"]
         return disclosure_attack.DisclosureAttack_wOutlierDetection(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             max_stdev=analytical_model.max_stdev_of_prob_estimates(
                 detection_gap_exp_factor=detection_gap_exp_factor,
             ),
@@ -91,7 +91,7 @@ def get_adversary(
         detection_gap_exp_factor = kwargs["detection_gap_exp_factor"]
         return disclosure_attack.DisclosureAttack_wOutlierDetection_wEarlyTermination(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             max_stdev=analytical_model.max_stdev_of_prob_estimates(
                 detection_gap_exp_factor=detection_gap_exp_factor,
             ),
@@ -117,8 +117,8 @@ def sim_tor(
     num_samples: int,
     **kwargs,
 ):
-    if "max_msg_delivery_time" not in kwargs:
-        kwargs["max_msg_delivery_time"] = network_delay_rv.max_value
+    if "max_delivery_time_for_adversary" not in kwargs:
+        kwargs["max_delivery_time_for_adversary"] = network_delay_rv.max_value
 
     env = simpy.Environment()
 
@@ -167,14 +167,14 @@ def sim_tor_model(
     prob_server_active: float,
     prob_attack_round: float,
     num_samples: int,
-    max_msg_delivery_time: float = 1,
+    max_delivery_time_for_adversary: float = 1,
     **kwargs,
 ):
     env = simpy.Environment()
 
     adversary = get_adversary(
         env=env,
-        max_msg_delivery_time=max_msg_delivery_time,
+        max_delivery_time_for_adversary=max_delivery_time_for_adversary,
         num_clients=num_clients,
         num_servers=num_servers,
         num_target_servers=num_target_servers,
@@ -188,7 +188,7 @@ def sim_tor_model(
         num_clients=num_clients,
         num_servers=num_servers,
         num_target_servers=num_target_servers,
-        max_msg_delivery_time=max_msg_delivery_time,
+        max_delivery_time_for_adversary=max_delivery_time_for_adversary,
         prob_server_active=prob_server_active,
         prob_attack_round=prob_attack_round,
     )

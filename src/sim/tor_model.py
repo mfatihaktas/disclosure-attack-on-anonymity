@@ -20,7 +20,7 @@ class TorModel_wRounds:
         num_clients: int,
         num_servers: int,
         num_target_servers: int,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
         prob_server_active: float,
         prob_attack_round: float,
     ):
@@ -30,7 +30,7 @@ class TorModel_wRounds:
         self.num_clients = num_clients
         self.num_servers = num_servers
         self.num_target_servers = num_target_servers
-        self.max_msg_delivery_time = max_msg_delivery_time
+        self.max_delivery_time_for_adversary = max_delivery_time_for_adversary
         self.prob_server_active = prob_server_active
         self.prob_attack_round = prob_attack_round
 
@@ -42,7 +42,7 @@ class TorModel_wRounds:
             f"\t num_clients= {self.num_clients} \n"
             f"\t num_servers= {self.num_servers} \n"
             f"\t num_target_servers= {self.num_target_servers} \n"
-            f"\t max_msg_delivery_time= {self.max_msg_delivery_time} \n"
+            f"\t max_delivery_time_for_adversary= {self.max_delivery_time_for_adversary} \n"
             f"\t prob_server_active= {self.prob_server_active} \n"
             f"\t prob_attack_round= {self.prob_attack_round} \n"
             ")"
@@ -64,7 +64,7 @@ class TorModel_wRounds:
     def generate_model_events(self):
         log(DEBUG, "Started")
 
-        interval_rv = random_variable.Exponential(mu=0.3 / self.max_msg_delivery_time)
+        interval_rv = random_variable.Exponential(mu=0.3 / self.max_delivery_time_for_adversary)
         target_client_id = -1
         msg_count = 0
         while True:
@@ -85,7 +85,7 @@ class TorModel_wRounds:
                 )
                 self.adversary.server_sent_msg(msg=msg)
 
-            yield self.env.timeout(0.1 * self.max_msg_delivery_time)
+            yield self.env.timeout(0.1 * self.max_delivery_time_for_adversary)
 
             # Generate "client completed request" event.
             if random.random() <= self.prob_attack_round:
@@ -139,7 +139,7 @@ def sim_w_disclosure_attack_w_joblib(
     num_samples: int,
     **kwargs,
 ) -> disclosure_attack.DisclosureAttackResult:
-    max_msg_delivery_time = 1
+    max_delivery_time_for_adversary = 1
 
     def sim():
         env = simpy.Environment()
@@ -147,13 +147,13 @@ def sim_w_disclosure_attack_w_joblib(
         if "stability_threshold" in kwargs:
             adversary = disclosure_attack.DisclosureAttack_wBaselineInspection_wStationaryRounds(
                 env=env,
-                max_msg_delivery_time=max_msg_delivery_time,
+                max_delivery_time_for_adversary=max_delivery_time_for_adversary,
                 stability_threshold=kwargs["stability_threshold"],
             )
         elif "max_stdev" in kwargs:
             adversary = disclosure_attack.DisclosureAttack_wOutlierDetection(
                 env=env,
-                max_msg_delivery_time=max_msg_delivery_time,
+                max_delivery_time_for_adversary=max_delivery_time_for_adversary,
                 max_stdev=kwargs["max_stdev"],
             )
         else:
@@ -165,7 +165,7 @@ def sim_w_disclosure_attack_w_joblib(
             num_clients=num_clients,
             num_servers=num_servers,
             num_target_servers=num_target_servers,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             prob_server_active=prob_server_active,
             prob_attack_round=prob_attack_round,
         )

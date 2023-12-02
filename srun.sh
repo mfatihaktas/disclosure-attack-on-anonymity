@@ -11,7 +11,7 @@ elif [ $1 = "j" ]; then
   # FILE="exp_perf_vs_detection_gap_exp_factor"
   # FILE="exp_perf_vs_num_servers_excluded_from_threshold"
   # FILE="exp_perf_vs_prob_server_active"
-  FILE="exp_perf_vs_max_msg_delivery_time"
+  FILE="exp_perf_vs_max_delivery_time_for_adversary"
 
   NTASKS=1
   echo "#!/bin/bash

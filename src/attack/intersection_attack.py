@@ -52,12 +52,12 @@ class Adversary_wIntersectionAttack(adversary_module.Adversary):
     def __init__(
         self,
         env: simpy.Environment,
-        max_msg_delivery_time: float,
+        max_delivery_time_for_adversary: float,
         num_target_client: int,
     ):
         super().__init__(
             env=env,
-            max_msg_delivery_time=max_msg_delivery_time,
+            max_delivery_time_for_adversary=max_delivery_time_for_adversary,
             num_target_client=num_target_client,
         )
 
@@ -72,7 +72,7 @@ class Adversary_wIntersectionAttack(adversary_module.Adversary):
         self.time_to_complete_attack = None
 
     def __repr__(self):
-        return f"Adversary_wIntersectionAttack(max_msg_delivery_time= {self.max_msg_delivery_time})"
+        return f"Adversary_wIntersectionAttack(max_delivery_time_for_adversary= {self.max_delivery_time_for_adversary})"
 
     def client_sent_msg(self, client_id: str):
         slog(
@@ -84,7 +84,7 @@ class Adversary_wIntersectionAttack(adversary_module.Adversary):
         )
 
         attack_window = AttackWindow(
-            start_time=self.env.now, end_time=self.env.now + self.max_msg_delivery_time
+            start_time=self.env.now, end_time=self.env.now + self.max_delivery_time_for_adversary
         )
 
         heapq.heappush(self.active_attack_window_heapq, attack_window)
