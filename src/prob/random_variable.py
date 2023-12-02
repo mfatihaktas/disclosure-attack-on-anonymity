@@ -159,6 +159,10 @@ class Uniform(RandomVariable):
     def to_latex(self) -> str:
         return "\mathrm{U}" + f"[{self.min_value}, {self.max_value}]"
 
+    def set_max_value(self, max_value: float):
+        self.max_value = max_value
+        self.dist = scipy.stats.uniform(loc=self.min_value, scale=self.max_value - self.min_value)
+
     def sample(self) -> float:
         return self.dist.rvs()
 
