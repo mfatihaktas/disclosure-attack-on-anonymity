@@ -1,5 +1,3 @@
-import numpy
-
 from src.model import trials_over_channels
 
 

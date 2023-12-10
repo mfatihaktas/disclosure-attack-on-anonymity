@@ -12,6 +12,9 @@ if [ $1 = "e" ]; then
   $PY tests/exp/exp_perf_vs_max_delivery_time.py
   # $PY tests/exp/exp_trials_over_channels.py
 
+elif [ $1 = "m" ]; then
+  $PY tests/exp/exp_model_for_paper.py
+
 else
   echo "Unexpected arg= $1"
 fi
