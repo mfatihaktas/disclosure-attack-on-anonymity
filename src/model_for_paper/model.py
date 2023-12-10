@@ -1,3 +1,5 @@
+import math
+
 from src.debug_utils import log, DEBUG, INFO
 from src.prob import random_variable
 
@@ -38,6 +40,32 @@ class NonTargetServer(CandidateServer):
         """
         return self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets)
 
+    def _prob_error_w_gaussian_sampling_dist(
+        self,
+        num_attack_rounds: int,
+        threshold_to_identify_as_target: float,
+    ) -> float:
+        sigma = (
+            math.sqrt(self._prob_active * (1 - self._prob_active))
+            / math.sqrt(num_attack_rounds)
+        )
+        rv = random_variable.Normal(
+            mu=self._prob_active,
+            sigma=sigma,
+        )
+        return rv.tail_prob(threshold_to_identify_as_target)
+
+    def _prob_error_w_binomial_sampling_dist(
+        self,
+        num_attack_rounds: int,
+        threshold_to_identify_as_target: float,
+    ) -> float:
+        rv = random_variable.Binomial(
+            n=num_attack_rounds,
+            p=self._prob_active,
+        )
+        return rv.tail_prob(num_attack_rounds * threshold_to_identify_as_target)
+
     def prob_error(
         self,
         num_attack_rounds: int,
@@ -45,11 +73,14 @@ class NonTargetServer(CandidateServer):
     ) -> float:
         """Returns the probability that a non-target server is identified as target.
         """
-        rv = random_variable.Binomial(
-            n=num_attack_rounds,
-            p=self._prob_active,
+        # return self._prob_error_w_binomial_sampling_dist(
+        #     num_attack_rounds=num_attack_rounds,
+        #     threshold_to_identify_as_target=threshold_to_identify_as_target,
+        # )
+        return self._prob_error_w_gaussian_sampling_dist(
+            num_attack_rounds=num_attack_rounds,
+            threshold_to_identify_as_target=threshold_to_identify_as_target,
         )
-        return rv.tail_prob(num_attack_rounds * threshold_to_identify_as_target)
 
 
 class TargetServer(CandidateServer):
@@ -93,13 +124,11 @@ class TargetServer(CandidateServer):
 
         return prob_active
 
-    def prob_error(
+    def _prob_error_w_binomial_sampling_dist(
         self,
         num_attack_rounds: int,
         threshold_to_identify_as_target: float,
     ) -> float:
-        """Returns the probability that a target server is identified as non-target.
-        """
         rv = random_variable.Binomial(
             n=num_attack_rounds,
             p=self._prob_active,
@@ -109,6 +138,37 @@ class TargetServer(CandidateServer):
         #     num_attack_rounds_X_threshold_to_identify_as_target=num_attack_rounds * threshold_to_identify_as_target,
         # )
         return rv.cdf(num_attack_rounds * threshold_to_identify_as_target)
+
+    def _prob_error_w_gaussian_sampling_dist(
+        self,
+        num_attack_rounds: int,
+        threshold_to_identify_as_target: float,
+    ) -> float:
+        sigma = (
+            math.sqrt(self._prob_active * (1 - self._prob_active))
+            / math.sqrt(num_attack_rounds)
+        )
+        rv = random_variable.Normal(
+            mu=self._prob_active,
+            sigma=sigma,
+        )
+        return rv.cdf(threshold_to_identify_as_target)
+
+    def prob_error(
+        self,
+        num_attack_rounds: int,
+        threshold_to_identify_as_target: float,
+    ) -> float:
+        """Returns the probability that a target server is identified as non-target.
+        """
+        # return self._prob_error_w_binomial_sampling_dist(
+        #     num_attack_rounds=num_attack_rounds,
+        #     threshold_to_identify_as_target=threshold_to_identify_as_target,
+        # )
+        return self._prob_error_w_gaussian_sampling_dist(
+            num_attack_rounds=num_attack_rounds,
+            threshold_to_identify_as_target=threshold_to_identify_as_target,
+        )
 
 
 def get_detection_threshold(
