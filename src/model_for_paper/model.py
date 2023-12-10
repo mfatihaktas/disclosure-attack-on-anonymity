@@ -1,3 +1,4 @@
+from src.debug_utils import log, DEBUG, INFO
 from src.prob import random_variable
 
 
@@ -111,3 +112,36 @@ class TargetServer:
         )
 
         return rv.cdf(threshold_to_identify_as_target)
+
+
+def get_detection_threshold(
+    non_target_arrival_rate: float,
+    attack_window_length: float,
+    num_target_packets: int,
+    num_target_servers: int,
+    alpha: float = 0.5,
+) -> float:
+    target_server = TargetServer(
+        non_target_arrival_rate=non_target_arrival_rate,
+        attack_window_length=attack_window_length,
+        num_target_packets=num_target_packets,
+        num_target_servers=num_target_servers,
+    )
+    prob_target_active = target_server.prob_active()
+
+    non_target_server = NonTargetServer(
+        non_target_arrival_rate=non_target_arrival_rate,
+        attack_window_length=attack_window_length,
+        num_target_packets=num_target_packets,
+    )
+    prob_non_target_active = non_target_server.prob_active()
+
+    log(
+        DEBUG, "",
+        prob_target_active=prob_target_active,
+        prob_non_target_active=prob_non_target_active,
+    )
+
+    return (
+        prob_non_target_active + (prob_target_active - prob_non_target_active) * alpha
+    )

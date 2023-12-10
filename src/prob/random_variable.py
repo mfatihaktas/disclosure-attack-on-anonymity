@@ -259,7 +259,7 @@ class Beta(RandomVariable):
         # return f"{round(self.D, 2)} x Beta(a= {self.a}, b= {self.b})"
         return f"Beta(a= {self.a}, b= {self.b})"
 
-    def to_latex(self):
+    def to_latex(self) -> str:
         return r"{} \times {}(a= {}, b= {})".format(self.D, r"\mathrm{Beta}", self.a, self.b)
 
     def pdf(self, x: float):
@@ -280,3 +280,37 @@ class Beta(RandomVariable):
 
     def sample(self) -> float:
         return self.dist.rvs(size=1)[0] * self.D
+
+
+class Binomial(RandomVariable):
+    def __init__(self, n: int, p: float):
+        super().__init__(min_value=0, max_value=n)
+
+        self.n = n
+        self.p = p
+
+        self.dist = scipy.stats.binom(n, p)
+
+    def __repr__(self):
+        return f"Binom(n= {self.n}, p= {self.p})"
+
+    def to_latex(self) -> str:
+        return r"{}(n= {}, p= {})".format(r"\mathrm{Binom}", self.n, self.p)
+
+    def pdf(self, k: int) -> float:
+        return self.dist.pdf(k)
+
+    def cdf(self, k: int) -> float:
+        return self.dist.cdf(k)
+
+    def tail_prob(self, k: int) -> float:
+        return 1 - self.cfd(k)
+
+    def mean(self) -> float:
+        return self.dist.mean()
+
+    def stdev(self) -> float:
+        return self.dist.std()
+
+    def sample(self) -> float:
+        return self.dist.rvs(size=1)[0]
