@@ -30,33 +30,29 @@ class NonTargetServer(CandidateServer):
         self.num_non_target_arrivals_rv = random_variable.Poisson(
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
+        self._prob_active = self.prob_active()
 
     def prob_active(self) -> float:
         """A candidate server is identified as "active" during an attack window,
         only if it receives at least `num_target_packets` many packets.
         """
-
         return self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets)
 
     def prob_error(
         self,
         num_attack_rounds: int,
         threshold_to_identify_as_target: float,
-    ) -> random_variable.RandomVariable:
-        """Returns the probability that a non-target server is identified as
-        a target.
+    ) -> float:
+        """Returns the probability that a non-target server is identified as target.
         """
-
-        prob_active = self.prob_active()
         rv = random_variable.Binomial(
             n=num_attack_rounds,
-            p=prob_active,
+            p=self._prob_active,
         )
+        return rv.tail_prob(num_attack_rounds * threshold_to_identify_as_target)
 
-        return rv.tail_prob(threshold_to_identify_as_target)
 
-
-class TargetServer:
+class TargetServer(CandidateServer):
     def __init__(
         self,
         non_target_arrival_rate: float,
@@ -74,6 +70,7 @@ class TargetServer:
         self.num_non_target_arrivals_rv = random_variable.Poisson(
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
+        self._prob_active = self.prob_active()
 
     def prob_active(self) -> float:
         """A candidate server is identified as "active" during an attack window,
@@ -100,18 +97,18 @@ class TargetServer:
         self,
         num_attack_rounds: int,
         threshold_to_identify_as_target: float,
-    ) -> random_variable.RandomVariable:
-        """Returns the probability that a target server is identified as
-        non-target.
+    ) -> float:
+        """Returns the probability that a target server is identified as non-target.
         """
-
-        prob_active = self.prob_active()
         rv = random_variable.Binomial(
             n=num_attack_rounds,
-            p=prob_active,
+            p=self._prob_active,
         )
-
-        return rv.cdf(threshold_to_identify_as_target)
+        # log(
+        #     INFO, "",
+        #     num_attack_rounds_X_threshold_to_identify_as_target=num_attack_rounds * threshold_to_identify_as_target,
+        # )
+        return rv.cdf(num_attack_rounds * threshold_to_identify_as_target)
 
 
 def get_detection_threshold(
@@ -137,7 +134,7 @@ def get_detection_threshold(
     prob_non_target_active = non_target_server.prob_active()
 
     log(
-        DEBUG, "",
+        INFO, "",
         prob_target_active=prob_target_active,
         prob_non_target_active=prob_non_target_active,
     )

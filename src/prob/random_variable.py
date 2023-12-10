@@ -298,13 +298,13 @@ class Binomial(RandomVariable):
         return r"{}(n= {}, p= {})".format(r"\mathrm{Binom}", self.n, self.p)
 
     def pdf(self, k: int) -> float:
-        return self.dist.pdf(k)
+        return self.dist.pmf(k)
 
     def cdf(self, k: int) -> float:
         return self.dist.cdf(k)
 
     def tail_prob(self, k: int) -> float:
-        return 1 - self.cfd(k)
+        return 1 - self.cdf(k)
 
     def mean(self) -> float:
         return self.dist.mean()

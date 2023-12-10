@@ -30,6 +30,10 @@ def plot_prob_error_vs_num_attack_rounds(
         num_target_servers=num_target_servers,
         alpha=alpha,
     )
+    log(
+        INFO, "",
+        target_detection_threshold=target_detection_threshold,
+    )
 
     num_attack_rounds_list = []
     prob_identifying_target_as_non_target_list = []
@@ -53,8 +57,8 @@ def plot_prob_error_vs_num_attack_rounds(
     log(
         DEBUG, "",
         num_attack_rounds_list=num_attack_rounds_list,
-        prob_identifying_target_as_non_target=prob_identifying_target_as_non_target,
-        prob_identifying_non_target_as_target=prob_identifying_non_target_as_target,
+        prob_identifying_target_as_non_target_list=prob_identifying_target_as_non_target_list,
+        prob_identifying_non_target_as_target_list=prob_identifying_non_target_as_target_list,
     )
 
     # Plot
@@ -66,21 +70,22 @@ def plot_prob_error_vs_num_attack_rounds(
     plot.sca(ax)
     plot.errorbar(num_attack_rounds_list, prob_identifying_target_as_non_target_list, color=NICE_BLUE, marker="o")
     plot.xlabel(r"$N_{\mathrm{attack-round}}$", fontsize=fontsize)
-    plot.ylabel(r"$\Prob\{\text{target identified as non-target}\}$", fontsize=fontsize)
+    # plot.ylabel(r"$\mathrm{Pr}\{\mathtext{target as non-target}\}$", fontsize=fontsize)
+    plot.ylabel("Pr(target as non-target)", fontsize=fontsize)
 
     ax = axs[1]
     plot.sca(ax)
     plot.errorbar(num_attack_rounds_list, prob_identifying_non_target_as_target_list, color=NICE_ORANGE, marker="o")
     plot.xlabel(r"$N_{\mathrm{attack-round}}$", fontsize=fontsize)
-    plot.ylabel(r"$\Prob\{\text{non-target identified as target}\}$", fontsize=fontsize)
+    # plot.ylabel(r"$\mathrm{Pr}\{\mathtext{non-target as target}\}$", fontsize=fontsize)
+    plot.ylabel("Pr(non-target as target)", fontsize=fontsize)
 
-    alpha: float = 0.5,
     title = (
         r"$\mu_{\mathrm{non-target}} =$" + fr"${non_target_arrival_rate}$, "
         r"$T_{\mathrm{attack-win}} =$" + fr"${attack_window_length}$, "
         r"$N_{\mathrm{target-packets}} =$" + fr"${num_target_packets}$, "
         r"$N_{\mathrm{target-servers}} =$" + fr"${num_target_servers}$, "
-        fr"$\alpha = {num_target_servers}$"
+        fr"$\alpha = {alpha}$"
     )
     st = plot.suptitle(title, fontsize=fontsize)  # , y=1.1
 
