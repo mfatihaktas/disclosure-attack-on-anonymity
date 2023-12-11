@@ -171,34 +171,94 @@ class TargetServer(CandidateServer):
         )
 
 
-def get_detection_threshold(
-    non_target_arrival_rate: float,
-    attack_window_length: float,
-    num_target_packets: int,
-    num_target_servers: int,
-    alpha: float = 0.5,
-) -> float:
-    target_server = TargetServer(
-        non_target_arrival_rate=non_target_arrival_rate,
-        attack_window_length=attack_window_length,
-        num_target_packets=num_target_packets,
-        num_target_servers=num_target_servers,
-    )
-    prob_target_active = target_server.prob_active()
+class ExpSetup:
+    def __init__(
+        self,
+        non_target_arrival_rate: float,
+        attack_window_length: float,
+        num_target_packets: int,
+        num_target_servers: int,
+        alpha: float = 0.5,
+    ):
+        self.non_target_arrival_rate = non_target_arrival_rate,
+        self.attack_window_length = attack_window_length,
+        self.num_target_packets = num_target_packets,
+        self.num_target_servers = num_target_servers,
+        self.alpha = alpha
 
-    non_target_server = NonTargetServer(
-        non_target_arrival_rate=non_target_arrival_rate,
-        attack_window_length=attack_window_length,
-        num_target_packets=num_target_packets,
-    )
-    prob_non_target_active = non_target_server.prob_active()
+        # Setup
+        self.target_server = TargetServer(
+            non_target_arrival_rate=non_target_arrival_rate,
+            attack_window_length=attack_window_length,
+            num_target_packets=num_target_packets,
+            num_target_servers=num_target_servers,
+        )
+        self.prob_target_active = self.target_server.prob_active()
 
-    log(
-        INFO, "",
-        prob_target_active=prob_target_active,
-        prob_non_target_active=prob_non_target_active,
-    )
+        self.non_target_server = NonTargetServer(
+            non_target_arrival_rate=non_target_arrival_rate,
+            attack_window_length=attack_window_length,
+            num_target_packets=num_target_packets,
+        )
+        self.prob_non_target_active = self.non_target_server.prob_active()
+        self.target_detection_threshold = self.get_detection_threshold()
+        log(
+            INFO, "",
+            prob_target_active=self.prob_target_active,
+            prob_non_target_active=self.prob_non_target_active,
+            target_detection_threshold=self.target_detection_threshold,
+        )
 
-    return (
-        prob_non_target_active + (prob_target_active - prob_non_target_active) * alpha
-    )
+    def get_detection_threshold(self) -> float:
+        return (
+            self.prob_non_target_active
+            + (self.prob_target_active - self.prob_non_target_active) * self.alpha
+        )
+
+    def prob_target_as_non_target(
+        self,
+        num_attack_rounds: int,
+    ) -> float:
+        return self.target_server.prob_error(
+            num_attack_rounds=num_attack_rounds,
+            threshold_to_identify_as_target=self.target_detection_threshold,
+        )
+
+    def prob_non_target_as_target(
+        self,
+        num_attack_rounds: int,
+    ) -> float:
+        return self.non_target_server.prob_error(
+            num_attack_rounds=num_attack_rounds,
+            threshold_to_identify_as_target=self.target_detection_threshold,
+        )
+
+    def get_num_attack_rounds(
+        self,
+        max_prob_error: float,
+    ) -> int:
+        num_attack_rounds = 1
+        while (
+            self.prob_target_as_non_target(
+                num_attack_rounds=num_attack_rounds,
+            ) > max_prob_error
+            or self.prob_non_target_as_target(
+                num_attack_rounds=num_attack_rounds,
+            ) > max_prob_error
+        ):
+            num_attack_rounds *= 2
+
+        left, right = 1, num_attack_rounds
+        while left < right:
+            mid = (left + right) // 2
+
+            if (
+                self.prob_target_as_non_target(num_attack_rounds=mid) > max_prob_error
+                or self.prob_non_target_as_target(num_attack_rounds=mid) > max_prob_error
+            ):
+                left = mid + 1
+
+            else:
+                right = mid
+
+        return left

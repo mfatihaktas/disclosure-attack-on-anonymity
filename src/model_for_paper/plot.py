@@ -10,26 +10,14 @@ def plot_prob_error_vs_num_attack_rounds(
     num_target_servers: int,
     alpha: float = 0.5,
 ):
-    # Compute
-    target_server = model.TargetServer(
-        non_target_arrival_rate=non_target_arrival_rate,
-        attack_window_length=attack_window_length,
-        num_target_packets=num_target_packets,
-        num_target_servers=num_target_servers,
-    )
-    non_target_server = model.NonTargetServer(
-        non_target_arrival_rate=non_target_arrival_rate,
-        attack_window_length=attack_window_length,
-        num_target_packets=num_target_packets,
-    )
-
-    target_detection_threshold = model.get_detection_threshold(
+    exp_setup = model.ExpSetup(
         non_target_arrival_rate=non_target_arrival_rate,
         attack_window_length=attack_window_length,
         num_target_packets=num_target_packets,
         num_target_servers=num_target_servers,
         alpha=alpha,
     )
+    target_detection_threshold = exp_setup.get_detection_threshold()
     log(
         INFO, "",
         target_detection_threshold=target_detection_threshold,
@@ -42,13 +30,13 @@ def plot_prob_error_vs_num_attack_rounds(
         print(f"> num_attack_rounds= {num_attack_rounds}")
         num_attack_rounds_list.append(num_attack_rounds)
 
-        prob_identifying_target_as_non_target = target_server.prob_error(
+        prob_identifying_target_as_non_target = exp_setup.prob_target_as_non_target(
             num_attack_rounds=num_attack_rounds,
             threshold_to_identify_as_target=target_detection_threshold,
         )
         prob_identifying_target_as_non_target_list.append(prob_identifying_target_as_non_target)
 
-        prob_identifying_non_target_as_target = non_target_server.prob_error(
+        prob_identifying_non_target_as_target = exp_setup.prob_non_target_as_target(
             num_attack_rounds=num_attack_rounds,
             threshold_to_identify_as_target=target_detection_threshold,
         )

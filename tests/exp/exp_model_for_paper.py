@@ -2,6 +2,12 @@ from src.model_for_paper import plot
 
 
 if __name__ == "__main__":
+    # non_target_arrival_rate = 1
+    # attack_window_length = 2
+    # num_target_packets = 1
+    # num_target_servers = 1
+    # alpha = 0.5
+
     non_target_arrival_rate = 1
     attack_window_length = 2
     num_target_packets = 1
