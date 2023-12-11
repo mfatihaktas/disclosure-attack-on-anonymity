@@ -25,11 +25,11 @@ def exp_setup() -> model.ExpSetup:
     "max_prob_error",
     [0.3, 0.2, 0.1, 0.01, 0.001]
 )
-def test_get_num_attack_rounds(
+def test_get_min_num_attack_rounds(
     exp_setup: model.ExpSetup,
     max_prob_error: float,
 ):
-    num_attack_rounds = exp_setup.get_num_attack_rounds(
+    num_attack_rounds = exp_setup.get_min_num_attack_rounds(
         max_prob_error=max_prob_error,
     )
     log(

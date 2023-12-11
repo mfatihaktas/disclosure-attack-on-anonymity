@@ -38,7 +38,7 @@ class NonTargetServer(CandidateServer):
         """A candidate server is identified as "active" during an attack window,
         only if it receives at least `num_target_packets` many packets.
         """
-        return self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets)
+        return self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets - 1)
 
     def _prob_error_w_gaussian_sampling_dist(
         self,
@@ -108,21 +108,41 @@ class TargetServer(CandidateServer):
         only if it receives at least `num_target_packets` many packets.
         """
 
-        num_target_arrivals_rv = random_variable.Binomial(
-            n=self.num_target_servers,
-            p=1 / self.num_target_servers,
-        )
+        if self.num_target_servers == 1:
+            return 1
 
-        prob_active = 0
-        for num_target_arrivals in range(self.num_target_packets + 1):
-            prob_num_target_arrivals = num_target_arrivals_rv.pdf(num_target_arrivals)
-            min_non_target_arrivals_for_active = self.num_target_packets - num_target_arrivals
-
-            prob_active += prob_num_target_arrivals * self.num_non_target_arrivals_rv.tail_prob(
-                min_non_target_arrivals_for_active
+        else:
+            num_target_arrivals_rv = random_variable.Binomial(
+                n=self.num_target_packets,
+                p=1 / self.num_target_servers,
             )
 
-        return prob_active
+            prob_active = 0
+            for num_target_arrivals in range(self.num_target_packets + 1):
+                prob_num_target_arrivals = num_target_arrivals_rv.pdf(num_target_arrivals)
+                min_non_target_arrivals_for_active = max(0, self.num_target_packets - num_target_arrivals)
+
+                prob_active += (
+                    prob_num_target_arrivals
+                    * (
+                        self.num_non_target_arrivals_rv.tail_prob(
+                            min_non_target_arrivals_for_active - 1
+                        ) if min_non_target_arrivals_for_active > 0 else 1
+                    )
+                )
+                # log(
+                #     INFO, "",
+                #     prob_num_target_arrivals=prob_num_target_arrivals,
+                #     num_non_target_arrivals_rv_tail_prob=self.num_non_target_arrivals_rv.tail_prob(
+                #         min_non_target_arrivals_for_active - 1
+                #     ),
+                # )
+
+            # log(
+            #     INFO, "",
+            #     prob_active=prob_active,
+            # )
+            return prob_active
 
     def _prob_error_w_binomial_sampling_dist(
         self,
@@ -144,6 +164,12 @@ class TargetServer(CandidateServer):
         num_attack_rounds: int,
         threshold_to_identify_as_target: float,
     ) -> float:
+        # log(
+        #     INFO, "",
+        #     num_attack_rounds=num_attack_rounds,
+        #     threshold_to_identify_as_target=threshold_to_identify_as_target,
+        # )
+
         sigma = (
             math.sqrt(self._prob_active * (1 - self._prob_active))
             / math.sqrt(num_attack_rounds)
@@ -233,28 +259,37 @@ class ExpSetup:
             threshold_to_identify_as_target=self.target_detection_threshold,
         )
 
-    def get_num_attack_rounds(
+    def get_min_num_attack_rounds(
         self,
         max_prob_error: float,
     ) -> int:
         num_attack_rounds = 1
-        while (
-            self.prob_target_as_non_target(
-                num_attack_rounds=num_attack_rounds,
-            ) > max_prob_error
-            or self.prob_non_target_as_target(
-                num_attack_rounds=num_attack_rounds,
-            ) > max_prob_error
-        ):
-            num_attack_rounds *= 2
+        while True:
+            prob_target_as_non_target = self.prob_target_as_non_target(num_attack_rounds=num_attack_rounds)
+            prob_non_target_as_target = self.prob_non_target_as_target(num_attack_rounds=num_attack_rounds)
+            log(
+                INFO, "",
+                prob_target_as_non_target=prob_target_as_non_target,
+                prob_non_target_as_target=prob_non_target_as_target,
+            )
+            if (
+                prob_target_as_non_target > max_prob_error
+                or prob_non_target_as_target > max_prob_error
+            ):
+                num_attack_rounds *= 2
+
+            else:
+                break
 
         left, right = 1, num_attack_rounds
         while left < right:
             mid = (left + right) // 2
 
+            prob_target_as_non_target = self.prob_target_as_non_target(num_attack_rounds=mid)
+            prob_non_target_as_target = self.prob_non_target_as_target(num_attack_rounds=mid)
             if (
-                self.prob_target_as_non_target(num_attack_rounds=mid) > max_prob_error
-                or self.prob_non_target_as_target(num_attack_rounds=mid) > max_prob_error
+                prob_target_as_non_target > max_prob_error
+                or prob_non_target_as_target > max_prob_error
             ):
                 left = mid + 1
 

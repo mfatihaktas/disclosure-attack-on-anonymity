@@ -138,7 +138,8 @@ class Poisson(RandomVariable):
         return r"{}(\mu={})".format("\mathrm{Poisson}", self.mu)
 
     def tail_prob(self, x: float) -> float:
-        return 1 - self.cdf(x)
+        # return 1 - self.cdf(x)
+        return self.dist.sf(x)
 
     def cdf(self, x: float) -> float:
         return self.dist.cdf(x)
