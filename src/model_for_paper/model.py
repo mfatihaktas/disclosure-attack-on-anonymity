@@ -1,3 +1,4 @@
+import dataclasses
 import enum
 import math
 
@@ -14,31 +15,16 @@ class SamplingDist(enum.Enum):
 SAMPLING_DIST = SamplingDist.GAUSSIAN
 
 
+@dataclasses.dataclass
 class CandidateServer:
-    def __init__(
-        self,
-        non_target_arrival_rate: float,
-        attack_window_length: float,
-        num_target_packets: int,
-    ):
-        self.non_target_arrival_rate = non_target_arrival_rate
-        self.attack_window_length = attack_window_length
-        self.num_target_packets = num_target_packets
+    non_target_arrival_rate: float
+    attack_window_length: float
+    num_target_packets: int
 
 
+@dataclasses.dataclass
 class NonTargetServer(CandidateServer):
-    def __init__(
-        self,
-        non_target_arrival_rate: float,
-        attack_window_length: float,
-        num_target_packets: int,
-    ):
-        super().__init__(
-            non_target_arrival_rate=non_target_arrival_rate,
-            attack_window_length=attack_window_length,
-            num_target_packets=num_target_packets,
-        )
-
+    def __post_init__(self):
         self.num_non_target_arrivals_rv = random_variable.Poisson(
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
@@ -100,21 +86,11 @@ class NonTargetServer(CandidateServer):
             )
 
 
+@dataclasses.dataclass
 class TargetServer(CandidateServer):
-    def __init__(
-        self,
-        non_target_arrival_rate: float,
-        attack_window_length: float,
-        num_target_packets: int,
-        num_target_servers: int,
-    ):
-        super().__init__(
-            non_target_arrival_rate=non_target_arrival_rate,
-            attack_window_length=attack_window_length,
-            num_target_packets=num_target_packets,
-        )
-        self.num_target_servers = num_target_servers
+    num_target_servers: int
 
+    def __post_init__(self):
         self.num_non_target_arrivals_rv = random_variable.Poisson(
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
@@ -221,34 +197,27 @@ class TargetServer(CandidateServer):
             )
 
 
-class ExpSetup:
-    def __init__(
-        self,
-        non_target_arrival_rate: float,
-        attack_window_length: float,
-        num_target_packets: int,
-        num_target_servers: int,
-        alpha: float = 0.5,
-    ):
-        self.non_target_arrival_rate = non_target_arrival_rate,
-        self.attack_window_length = attack_window_length,
-        self.num_target_packets = num_target_packets,
-        self.num_target_servers = num_target_servers,
-        self.alpha = alpha
+@dataclasses.dataclass
+class ExpSetup_wTargetVsNonTarget:
+    non_target_arrival_rate: float
+    attack_window_length: float
+    num_target_packets: int
+    num_target_servers: int
+    alpha: float = 0.5
 
-        # Setup
+    def __post_init__(self):
         self.target_server = TargetServer(
-            non_target_arrival_rate=non_target_arrival_rate,
-            attack_window_length=attack_window_length,
-            num_target_packets=num_target_packets,
-            num_target_servers=num_target_servers,
+            non_target_arrival_rate=self.non_target_arrival_rate,
+            attack_window_length=self.attack_window_length,
+            num_target_packets=self.num_target_packets,
+            num_target_servers=self.num_target_servers,
         )
         self.prob_target_active = self.target_server.prob_active()
 
         self.non_target_server = NonTargetServer(
-            non_target_arrival_rate=non_target_arrival_rate,
-            attack_window_length=attack_window_length,
-            num_target_packets=num_target_packets,
+            non_target_arrival_rate=self.non_target_arrival_rate,
+            attack_window_length=self.attack_window_length,
+            num_target_packets=self.num_target_packets,
         )
         self.prob_non_target_active = self.non_target_server.prob_active()
         self.target_detection_threshold = self.get_detection_threshold()
@@ -321,3 +290,11 @@ class ExpSetup:
                 right = mid
 
         return left
+
+
+class ExpSetup_wAttackVsBaselineWin:
+    non_target_arrival_rate: float
+    attack_window_length: float
+    num_target_packets: int
+    num_target_servers: int
+    alpha: float = 0.5

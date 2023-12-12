@@ -15,7 +15,7 @@ def plot_prob_error_vs_num_attack_rounds(
     num_target_servers: int,
     alpha: float = 0.5,
 ):
-    exp_setup = model.ExpSetup(
+    exp_setup = model.ExpSetup_wTargetVsNonTarget(
         non_target_arrival_rate=non_target_arrival_rate,
         attack_window_length=attack_window_length,
         num_target_packets=num_target_packets,
@@ -216,7 +216,7 @@ def plot_attack_perf_vs_non_target_arrival_rate(
     def attack_perf_point_for_given_x(
         non_target_arrival_rate: float,
     ) -> AttackPerfPoint:
-        exp_setup = model.ExpSetup(
+        exp_setup = model.ExpSetup_wTargetVsNonTarget(
             non_target_arrival_rate=non_target_arrival_rate,
             attack_window_length=attack_window_length,
             num_target_packets=num_target_packets,
