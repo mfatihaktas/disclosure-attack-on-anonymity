@@ -17,10 +17,15 @@ if __name__ == "__main__":
     # )
 
     max_prob_error = 0.1
-    attack_window_length = 1
-    num_target_packets = 1
-    # num_target_packets = 5
-    num_target_servers = 2
+    # max_prob_error = 0.2
+    # attack_window_length = 1
+    attack_window_length = 5
+    # num_target_packets = 1
+    # num_target_packets = 3
+    num_target_packets = 5
+    # num_target_servers = 1
+    # num_target_servers = 2
+    num_target_servers = 5
     alpha = 0.5
 
     plot.plot_attack_perf_vs_non_target_arrival_rate(

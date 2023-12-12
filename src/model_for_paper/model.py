@@ -1,7 +1,17 @@
+import enum
 import math
 
 from src.debug_utils import log, DEBUG, INFO
 from src.prob import random_variable
+
+
+class SamplingDist(enum.Enum):
+    BINOMIAL = "binomial"
+    GAUSSIAN = "gaussian"
+
+
+# SAMPLING_DIST = SamplingDist.BINOMIAL
+SAMPLING_DIST = SamplingDist.GAUSSIAN
 
 
 class CandidateServer:
@@ -33,6 +43,10 @@ class NonTargetServer(CandidateServer):
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
         self._prob_active = self.prob_active()
+        log(
+            INFO, "NonTargetServer::",
+            prob_active=self._prob_active,
+        )
 
     def prob_active(self) -> float:
         """A candidate server is identified as "active" during an attack window,
@@ -73,14 +87,17 @@ class NonTargetServer(CandidateServer):
     ) -> float:
         """Returns the probability that a non-target server is identified as target.
         """
-        # return self._prob_error_w_binomial_sampling_dist(
-        #     num_attack_rounds=num_attack_rounds,
-        #     threshold_to_identify_as_target=threshold_to_identify_as_target,
-        # )
-        return self._prob_error_w_gaussian_sampling_dist(
-            num_attack_rounds=num_attack_rounds,
-            threshold_to_identify_as_target=threshold_to_identify_as_target,
-        )
+        if SAMPLING_DIST == SamplingDist.BINOMIAL:
+            return self._prob_error_w_binomial_sampling_dist(
+                num_attack_rounds=num_attack_rounds,
+                threshold_to_identify_as_target=threshold_to_identify_as_target,
+            )
+
+        elif SAMPLING_DIST == SamplingDist.GAUSSIAN:
+            return self._prob_error_w_gaussian_sampling_dist(
+                num_attack_rounds=num_attack_rounds,
+                threshold_to_identify_as_target=threshold_to_identify_as_target,
+            )
 
 
 class TargetServer(CandidateServer):
@@ -102,6 +119,10 @@ class TargetServer(CandidateServer):
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
         self._prob_active = self.prob_active()
+        log(
+            INFO, "TargetServer::",
+            prob_active=self._prob_active,
+        )
 
     def prob_active(self) -> float:
         """A candidate server is identified as "active" during an attack window,
@@ -176,7 +197,7 @@ class TargetServer(CandidateServer):
         )
         rv = random_variable.Normal(
             mu=self._prob_active,
-            sigma=sigma,
+            sigma=sigma if sigma else 0.000001,
         )
         return rv.cdf(threshold_to_identify_as_target)
 
@@ -187,14 +208,17 @@ class TargetServer(CandidateServer):
     ) -> float:
         """Returns the probability that a target server is identified as non-target.
         """
-        # return self._prob_error_w_binomial_sampling_dist(
-        #     num_attack_rounds=num_attack_rounds,
-        #     threshold_to_identify_as_target=threshold_to_identify_as_target,
-        # )
-        return self._prob_error_w_gaussian_sampling_dist(
-            num_attack_rounds=num_attack_rounds,
-            threshold_to_identify_as_target=threshold_to_identify_as_target,
-        )
+        if SAMPLING_DIST == SamplingDist.BINOMIAL:
+            return self._prob_error_w_binomial_sampling_dist(
+                num_attack_rounds=num_attack_rounds,
+                threshold_to_identify_as_target=threshold_to_identify_as_target,
+            )
+
+        elif SAMPLING_DIST == SamplingDist.GAUSSIAN:
+            return self._prob_error_w_gaussian_sampling_dist(
+                num_attack_rounds=num_attack_rounds,
+                threshold_to_identify_as_target=threshold_to_identify_as_target,
+            )
 
 
 class ExpSetup:
@@ -267,11 +291,11 @@ class ExpSetup:
         while True:
             prob_target_as_non_target = self.prob_target_as_non_target(num_attack_rounds=num_attack_rounds)
             prob_non_target_as_target = self.prob_non_target_as_target(num_attack_rounds=num_attack_rounds)
-            log(
-                INFO, "",
-                prob_target_as_non_target=prob_target_as_non_target,
-                prob_non_target_as_target=prob_non_target_as_target,
-            )
+            # log(
+            #     INFO, "",
+            #     prob_target_as_non_target=prob_target_as_non_target,
+            #     prob_non_target_as_target=prob_non_target_as_target,
+            # )
             if (
                 prob_target_as_non_target > max_prob_error
                 or prob_non_target_as_target > max_prob_error

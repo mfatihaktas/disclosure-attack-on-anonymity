@@ -96,6 +96,8 @@ class AttackPerfPoint:
     num_attack_rounds: int
     prob_target_as_non_target: float
     prob_non_target_as_target: float
+    prob_target_active: float
+    prob_non_target_active: float
 
 
 @dataclasses.dataclass
@@ -117,6 +119,12 @@ class AttackPerf:
     def prob_non_target_as_target_list(self) -> list:
         return [p.prob_non_target_as_target for p in self.perf_point_list]
 
+    def prob_target_active_list(self) -> list:
+        return [p.prob_target_active for p in self.perf_point_list]
+
+    def prob_non_target_active_list(self) -> list:
+        return [p.prob_non_target_active for p in self.perf_point_list]
+
 
 def _plot_attack_perf(
     attack_perf: AttackPerf,
@@ -128,29 +136,43 @@ def _plot_attack_perf(
     num_attack_rounds_list = attack_perf.num_attack_rounds_list()
     prob_target_as_non_target_list = attack_perf.prob_target_as_non_target_list()
     prob_non_target_as_target_list = attack_perf.prob_non_target_as_target_list()
+    prob_target_active_list = attack_perf.prob_target_active_list()
+    prob_non_target_active_list = attack_perf.prob_non_target_active_list()
 
     fontsize = 14
-    num_columns = 3
+    num_columns = 4
     fig, axs = plot.subplots(1, num_columns)
 
-    ax = axs[0]
+    i = 0
+    ax = axs[i]
+    plot.sca(ax)
+    plot.plot(x_list, prob_target_active_list, label="target", color="r", marker="x")
+    plot.plot(x_list, prob_non_target_active_list, label="non-target", color="b", marker="x")
+    plot.legend(loc="best", framealpha=0.5, fontsize=fontsize)
+    plot.xlabel(x_label, fontsize=fontsize)
+    plot.ylabel(r"$\mathrm{Pr}\{\mathrm{active}\}$", fontsize=fontsize)
+
+    i += 1
+    ax = axs[i]
     ax.set_yscale("log")
     plot.sca(ax)
     plot.errorbar(x_list, num_attack_rounds_list, color=NICE_BLUE, marker="o")
     plot.xlabel(x_label, fontsize=fontsize)
     plot.ylabel(r"$N_{\mathrm{attack-round}}$", fontsize=fontsize)
 
-    ax = axs[1]
+    i += 1
+    ax = axs[i]
     plot.sca(ax)
     plot.errorbar(x_list, prob_target_as_non_target_list, color=NICE_RED, marker="o")
     plot.xlabel(x_label, fontsize=fontsize)
-    plot.ylabel("Pr(target as non-target)", fontsize=fontsize)
+    plot.ylabel(r"$\mathrm{Pr}\{\mathrm{target-as-non-target}\}$", fontsize=fontsize)
 
-    ax = axs[2]
+    i += 1
+    ax = axs[i]
     plot.sca(ax)
     plot.errorbar(x_list, prob_non_target_as_target_list, color=NICE_ORANGE, marker="o")
     plot.xlabel(x_label, fontsize=fontsize)
-    plot.ylabel("Pr(non-target as target)", fontsize=fontsize)
+    plot.ylabel(r"$\mathrm{Pr}\{\mathrm{non-target-as-target}\}$", fontsize=fontsize)
 
     st = plot.suptitle(title, fontsize=fontsize)  # , y=1.1
 
@@ -215,7 +237,7 @@ def plot_attack_perf_vs_non_target_arrival_rate(
             )
             return None
 
-        return AttackPerfPoint(
+        perf_point = AttackPerfPoint(
             x=non_target_arrival_rate,
             num_attack_rounds=num_attack_rounds,
             prob_target_as_non_target=exp_setup.prob_target_as_non_target(
@@ -224,11 +246,21 @@ def plot_attack_perf_vs_non_target_arrival_rate(
             prob_non_target_as_target=exp_setup.prob_non_target_as_target(
                 num_attack_rounds=num_attack_rounds
             ),
+            prob_target_active=exp_setup.prob_target_active,
+            prob_non_target_active=exp_setup.prob_non_target_active,
         )
+        log(
+            INFO, "",
+            non_target_arrival_rate=non_target_arrival_rate,
+            perf_point=perf_point,
+        )
+
+        return perf_point
 
     attack_perf = _get_attack_perf_to_plot(
         x_list=numpy.linspace(
-            start=0.1 / attack_window_length,
+            # start=0.1 / attack_window_length,
+            start=0,
             stop=10 / attack_window_length,
             num=50,
         ),
