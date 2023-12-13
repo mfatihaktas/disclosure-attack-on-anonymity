@@ -2,7 +2,7 @@ import dataclasses
 import enum
 import math
 
-from src.debug_utils import log, DEBUG, INFO
+from src.debug_utils import check, log, DEBUG, INFO
 from src.prob import random_variable
 
 
@@ -21,58 +21,39 @@ class CandidateServer:
     attack_window_length: float
     num_target_packets: int
 
-
-@dataclasses.dataclass
-class NonTargetServer(CandidateServer):
     def __post_init__(self):
         self.num_non_target_arrivals_rv = random_variable.Poisson(
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
-        self._prob_active = self.prob_active()
-        log(
-            INFO, "NonTargetServer::",
-            prob_active=self._prob_active,
+        self.prob_active_in_attack_win = self.get_prob_active_in_attack_win()
+        self.prob_active_in_baseline_win = (
+            self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets - 1)
         )
 
-    def prob_active(self) -> float:
-        """A candidate server is identified as "active" during an attack window,
-        only if it receives at least `num_target_packets` many packets.
-        """
-        return self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets - 1)
+        log(
+            INFO, "",
+            prob_active_in_attack_win=self.prob_active_in_attack_win,
+            prob_active_in_baseline_win=self.prob_active_in_baseline_win,
+        )
 
-    def _prob_error_w_gaussian_sampling_dist(
+    def _gaussian_sampling_dist(
         self,
         num_attack_rounds: int,
-        threshold_to_identify_as_target: float,
-    ) -> float:
+    ) -> random_variable.Normal:
         sigma = (
-            math.sqrt(self._prob_active * (1 - self._prob_active))
+            math.sqrt(self.prob_active_in_attack_win * (1 - self.prob_active_in_attack_win))
             / math.sqrt(num_attack_rounds)
         )
-        rv = random_variable.Normal(
-            mu=self._prob_active,
+        return random_variable.Normal(
+            mu=self.prob_active_in_attack_win,
             sigma=sigma,
         )
-        return rv.tail_prob(threshold_to_identify_as_target)
-
-    def _prob_error_w_binomial_sampling_dist(
-        self,
-        num_attack_rounds: int,
-        threshold_to_identify_as_target: float,
-    ) -> float:
-        rv = random_variable.Binomial(
-            n=num_attack_rounds,
-            p=self._prob_active,
-        )
-        return rv.tail_prob(num_attack_rounds * threshold_to_identify_as_target)
 
     def prob_error(
         self,
         num_attack_rounds: int,
         threshold_to_identify_as_target: float,
     ) -> float:
-        """Returns the probability that a non-target server is identified as target.
-        """
         if SAMPLING_DIST == SamplingDist.BINOMIAL:
             return self._prob_error_w_binomial_sampling_dist(
                 num_attack_rounds=num_attack_rounds,
@@ -85,22 +66,64 @@ class NonTargetServer(CandidateServer):
                 threshold_to_identify_as_target=threshold_to_identify_as_target,
             )
 
+    def _gaussian_sampling_rv_for_detection_w_baseline(
+        self,
+        num_attack_rounds: int,
+    ) -> random_variable.RandomVariable:
+        mu = self.prob_active_in_attack_win - self.prob_active_in_baseline_win
+        check(mu >= 0, "")
+
+        var_attack_win = (
+            self.prob_active_in_attack_win * (1 - self.prob_active_in_attack_win)
+            / num_attack_rounds
+        )
+        var_baseline_win = (
+            self.prob_active_in_baseline_win * (1 - self.prob_active_in_baseline_win)
+            / num_attack_rounds / self.num_baseline_wins_per_attack_win
+        )
+        sigma = math.sqrt(var_attack_win + var_baseline_win)
+
+        return random_variable.Normal(
+            mu=mu,
+            sigma=sigma if sigma else 0.000001,
+        )
+
+
+@dataclasses.dataclass
+class NonTargetServer(CandidateServer):
+    def get_prob_active_in_attack_win(self) -> float:
+        """A candidate server is identified as "active" during an attack window,
+        only if it receives at least `num_target_packets` many packets.
+        """
+        return self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets - 1)
+
+    def _prob_error_w_gaussian_sampling_dist(
+        self,
+        num_attack_rounds: int,
+        threshold_to_identify_as_target: float,
+    ) -> float:
+        sampling_rv = self._gaussian_sampling_dist(
+            num_attack_rounds=num_attack_rounds,
+        )
+        return sampling_rv.tail_prob(threshold_to_identify_as_target)
+
+    def _prob_error_w_binomial_sampling_dist(
+        self,
+        num_attack_rounds: int,
+        threshold_to_identify_as_target: float,
+    ) -> float:
+        rv = random_variable.Binomial(
+            n=num_attack_rounds,
+            p=self.prob_active_in_attack_win,
+        )
+        return rv.tail_prob(num_attack_rounds * threshold_to_identify_as_target)
+
 
 @dataclasses.dataclass
 class TargetServer(CandidateServer):
     num_target_servers: int
 
-    def __post_init__(self):
-        self.num_non_target_arrivals_rv = random_variable.Poisson(
-            mu=self.attack_window_length * self.non_target_arrival_rate
-        )
-        self._prob_active = self.prob_active()
-        log(
-            INFO, "TargetServer::",
-            prob_active=self._prob_active,
-        )
-
-    def prob_active(self) -> float:
+    def get_prob_active_in_attack_win(self) -> float:
         """A candidate server is identified as "active" during an attack window,
         only if it receives at least `num_target_packets` many packets.
         """
@@ -114,12 +137,12 @@ class TargetServer(CandidateServer):
                 p=1 / self.num_target_servers,
             )
 
-            prob_active = 0
+            prob_active_in_attack_win = 0
             for num_target_arrivals in range(self.num_target_packets + 1):
                 prob_num_target_arrivals = num_target_arrivals_rv.pdf(num_target_arrivals)
                 min_non_target_arrivals_for_active = max(0, self.num_target_packets - num_target_arrivals)
 
-                prob_active += (
+                prob_active_in_attack_win += (
                     prob_num_target_arrivals
                     * (
                         self.num_non_target_arrivals_rv.tail_prob(
@@ -137,9 +160,9 @@ class TargetServer(CandidateServer):
 
             # log(
             #     INFO, "",
-            #     prob_active=prob_active,
+            #     prob_active_in_attack_win=prob_active_in_attack_win,
             # )
-            return prob_active
+            return prob_active_in_attack_win
 
     def _prob_error_w_binomial_sampling_dist(
         self,
@@ -148,7 +171,7 @@ class TargetServer(CandidateServer):
     ) -> float:
         rv = random_variable.Binomial(
             n=num_attack_rounds,
-            p=self._prob_active,
+            p=self.prob_active_in_attack_win,
         )
         # log(
         #     INFO, "",
@@ -161,77 +184,60 @@ class TargetServer(CandidateServer):
         num_attack_rounds: int,
         threshold_to_identify_as_target: float,
     ) -> float:
-        # log(
-        #     INFO, "",
-        #     num_attack_rounds=num_attack_rounds,
-        #     threshold_to_identify_as_target=threshold_to_identify_as_target,
-        # )
+        sampling_rv = self._gaussian_sampling_dist(
+            num_attack_rounds=num_attack_rounds,
+        )
+        return sampling_rv.cdf(threshold_to_identify_as_target)
 
-        sigma = (
-            math.sqrt(self._prob_active * (1 - self._prob_active))
-            / math.sqrt(num_attack_rounds)
-        )
-        rv = random_variable.Normal(
-            mu=self._prob_active,
-            sigma=sigma if sigma else 0.000001,
-        )
-        return rv.cdf(threshold_to_identify_as_target)
+
+@dataclasses.dataclass
+class NonTargetServer_wBaseline(NonTargetServer):
+    num_baseline_wins_per_attack_win: int
 
     def prob_error(
         self,
         num_attack_rounds: int,
         threshold_to_identify_as_target: float,
     ) -> float:
-        """Returns the probability that a target server is identified as non-target.
-        """
-        if SAMPLING_DIST == SamplingDist.BINOMIAL:
-            return self._prob_error_w_binomial_sampling_dist(
-                num_attack_rounds=num_attack_rounds,
-                threshold_to_identify_as_target=threshold_to_identify_as_target,
-            )
-
-        elif SAMPLING_DIST == SamplingDist.GAUSSIAN:
-            return self._prob_error_w_gaussian_sampling_dist(
-                num_attack_rounds=num_attack_rounds,
-                threshold_to_identify_as_target=threshold_to_identify_as_target,
-            )
+        sampling_rv = self._gaussian_sampling_rv_for_detection_w_baseline(
+            num_attack_rounds=num_attack_rounds,
+        )
+        return sampling_rv.tail_prob(threshold_to_identify_as_target)
 
 
 @dataclasses.dataclass
-class ExpSetup_wTargetVsNonTarget:
+class TargetServer_wBaseline(TargetServer):
+    num_baseline_wins_per_attack_win: int
+
+    def prob_error(
+        self,
+        num_attack_rounds: int,
+        threshold_to_identify_as_target: float,
+    ) -> float:
+        sampling_rv = self._gaussian_sampling_rv_for_detection_w_baseline(
+            num_attack_rounds=num_attack_rounds,
+        )
+        return sampling_rv.cdf(threshold_to_identify_as_target)
+
+
+@dataclasses.dataclass
+class ExpSetup:
     non_target_arrival_rate: float
     attack_window_length: float
     num_target_packets: int
     num_target_servers: int
-    alpha: float = 0.5
+    alpha: float
 
     def __post_init__(self):
-        self.target_server = TargetServer(
-            non_target_arrival_rate=self.non_target_arrival_rate,
-            attack_window_length=self.attack_window_length,
-            num_target_packets=self.num_target_packets,
-            num_target_servers=self.num_target_servers,
-        )
-        self.prob_target_active = self.target_server.prob_active()
+        self.target_server = self.get_target_server()
+        self.non_target_server = self.get_non_target_server()
 
-        self.non_target_server = NonTargetServer(
-            non_target_arrival_rate=self.non_target_arrival_rate,
-            attack_window_length=self.attack_window_length,
-            num_target_packets=self.num_target_packets,
-        )
-        self.prob_non_target_active = self.non_target_server.prob_active()
         self.target_detection_threshold = self.get_detection_threshold()
         log(
             INFO, "",
-            prob_target_active=self.prob_target_active,
-            prob_non_target_active=self.prob_non_target_active,
+            target_server=self.target_server,
+            non_target_server=self.non_target_server,
             target_detection_threshold=self.target_detection_threshold,
-        )
-
-    def get_detection_threshold(self) -> float:
-        return (
-            self.prob_non_target_active
-            + (self.prob_target_active - self.prob_non_target_active) * self.alpha
         )
 
     def prob_target_as_non_target(
@@ -292,9 +298,58 @@ class ExpSetup_wTargetVsNonTarget:
         return left
 
 
-class ExpSetup_wAttackVsBaselineWin:
-    non_target_arrival_rate: float
-    attack_window_length: float
-    num_target_packets: int
-    num_target_servers: int
-    alpha: float = 0.5
+@dataclasses.dataclass
+class ExpSetup_wTargetVsNonTarget(ExpSetup):
+    def get_target_server(self) -> TargetServer:
+        return TargetServer(
+            non_target_arrival_rate=self.non_target_arrival_rate,
+            attack_window_length=self.attack_window_length,
+            num_target_packets=self.num_target_packets,
+            num_target_servers=self.num_target_servers,
+        )
+
+    def get_non_target_server(self) -> NonTargetServer:
+        return NonTargetServer(
+            non_target_arrival_rate=self.non_target_arrival_rate,
+            attack_window_length=self.attack_window_length,
+            num_target_packets=self.num_target_packets,
+        )
+
+    def get_detection_threshold(self) -> float:
+        return (
+            self.non_target_server.prob_active_in_attack_win
+            + (
+                self.target_server.prob_active_in_attack_win
+                - self.non_target_server.prob_active_in_attack_win
+            ) * self.alpha
+        )
+
+
+@dataclasses.dataclass
+class ExpSetup_wBaseline(ExpSetup):
+    num_baseline_wins_per_attack_win: int
+
+    def get_target_server(self) -> TargetServer_wBaseline:
+        return TargetServer_wBaseline(
+            non_target_arrival_rate=self.non_target_arrival_rate,
+            attack_window_length=self.attack_window_length,
+            num_target_packets=self.num_target_packets,
+            num_target_servers=self.num_target_servers,
+            num_baseline_wins_per_attack_win=self.num_baseline_wins_per_attack_win,
+        )
+
+    def get_non_target_server(self) -> NonTargetServer_wBaseline:
+        return NonTargetServer_wBaseline(
+            non_target_arrival_rate=self.non_target_arrival_rate,
+            attack_window_length=self.attack_window_length,
+            num_target_packets=self.num_target_packets,
+            num_baseline_wins_per_attack_win=1,
+        )
+
+    def get_detection_threshold(self) -> float:
+        return (
+            (
+                self.target_server.prob_active_in_attack_win
+                - self.target_server.prob_active_in_baseline_win
+            ) * self.alpha
+        )
