@@ -96,8 +96,9 @@ class AttackPerfPoint:
     num_attack_rounds: int
     prob_target_as_non_target: float
     prob_non_target_as_target: float
-    prob_target_active: float
-    prob_non_target_active: float
+    prob_target_active_in_attack_win: float
+    prob_target_active_in_baseline_win: float
+    prob_non_target_active_in_attack_win: float
 
 
 @dataclasses.dataclass
@@ -119,11 +120,14 @@ class AttackPerf:
     def prob_non_target_as_target_list(self) -> list:
         return [p.prob_non_target_as_target for p in self.perf_point_list]
 
-    def prob_target_active_list(self) -> list:
-        return [p.prob_target_active for p in self.perf_point_list]
+    def prob_target_active_in_attack_win_list(self) -> list:
+        return [p.prob_target_active_in_attack_win for p in self.perf_point_list]
 
-    def prob_non_target_active_list(self) -> list:
-        return [p.prob_non_target_active for p in self.perf_point_list]
+    def prob_target_active_in_baseline_win_list(self) -> list:
+        return [p.prob_target_active_in_baseline_win for p in self.perf_point_list]
+
+    def prob_non_target_active_in_attack_win_list(self) -> list:
+        return [p.prob_non_target_active_in_attack_win for p in self.perf_point_list]
 
 
 def _plot_attack_perf(
@@ -136,8 +140,9 @@ def _plot_attack_perf(
     num_attack_rounds_list = attack_perf.num_attack_rounds_list()
     prob_target_as_non_target_list = attack_perf.prob_target_as_non_target_list()
     prob_non_target_as_target_list = attack_perf.prob_non_target_as_target_list()
-    prob_target_active_list = attack_perf.prob_target_active_list()
-    prob_non_target_active_list = attack_perf.prob_non_target_active_list()
+    prob_target_active_in_attack_win_list = attack_perf.prob_target_active_in_attack_win_list()
+    prob_target_active_in_baseline_win_list = attack_perf.prob_target_active_in_baseline_win_list()
+    prob_non_target_active_in_attack_win_list = attack_perf.prob_non_target_active_in_attack_win_list()
 
     fontsize = 14
     num_columns = 4
@@ -146,11 +151,12 @@ def _plot_attack_perf(
     i = 0
     ax = axs[i]
     plot.sca(ax)
-    plot.plot(x_list, prob_target_active_list, label="target", color="r", marker="x")
-    plot.plot(x_list, prob_non_target_active_list, label="non-target", color="b", marker="x")
+    plot.plot(x_list, prob_target_active_in_attack_win_list, label="attack win", color="r", marker="x")
+    plot.plot(x_list, prob_target_active_in_baseline_win_list, label="baseline win", color="b", marker="x")
+    # plot.plot(x_list, prob_non_target_active_in_attack_win_list, label="non-target", color="b", marker="x")
     plot.legend(loc="best", framealpha=0.5, fontsize=fontsize)
     plot.xlabel(x_label, fontsize=fontsize)
-    plot.ylabel(r"$\mathrm{Pr}\{\mathrm{active}\}$", fontsize=fontsize)
+    plot.ylabel(r"$\mathrm{Pr}\{\mathrm{target-active}\}$", fontsize=fontsize)
 
     i += 1
     ax = axs[i]
@@ -216,13 +222,22 @@ def plot_attack_perf_vs_non_target_arrival_rate(
     def attack_perf_point_for_given_x(
         non_target_arrival_rate: float,
     ) -> AttackPerfPoint:
-        exp_setup = model.ExpSetup_wTargetVsNonTarget(
+        # exp_setup = model.ExpSetup_wTargetVsNonTarget(
+        #     non_target_arrival_rate=non_target_arrival_rate,
+        #     attack_window_length=attack_window_length,
+        #     num_target_packets=num_target_packets,
+        #     num_target_servers=num_target_servers,
+        #     alpha=alpha,
+        # )
+        exp_setup = model.ExpSetup_wBaseline(
             non_target_arrival_rate=non_target_arrival_rate,
             attack_window_length=attack_window_length,
             num_target_packets=num_target_packets,
             num_target_servers=num_target_servers,
             alpha=alpha,
+            num_baseline_wins_per_attack_win=1,
         )
+
         try:
             num_attack_rounds = exp_setup.get_min_num_attack_rounds(max_prob_error=max_prob_error)
             log(
@@ -246,8 +261,13 @@ def plot_attack_perf_vs_non_target_arrival_rate(
             prob_non_target_as_target=exp_setup.prob_non_target_as_target(
                 num_attack_rounds=num_attack_rounds
             ),
-            prob_target_active=exp_setup.prob_target_active,
-            prob_non_target_active=exp_setup.prob_non_target_active,
+            prob_target_active_in_attack_win=exp_setup.target_server.prob_active_in_attack_win,
+            prob_target_active_in_baseline_win=(
+                exp_setup.target_server.prob_active_in_baseline_win
+                if hasattr(exp_setup.target_server, "prob_active_in_baseline_win")
+                else None
+            ),
+            prob_non_target_active_in_attack_win=exp_setup.non_target_server.prob_active_in_attack_win,
         )
         log(
             INFO, "",
