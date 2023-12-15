@@ -313,3 +313,92 @@ def plot_attack_perf_vs_non_target_arrival_rate(
         title=title,
         plot_name=plot_name,
     )
+
+
+def plot_attack_perf_vs_num_packets_to_deem_active(
+    max_prob_error: float,
+    attack_window_length: float,
+    num_target_packets: int,
+    num_target_servers: int,
+    alpha: float,
+    non_target_arrival_rate: float,
+):
+    def attack_perf_point_for_given_x(
+        num_packets_to_deem_active: float,
+    ) -> AttackPerfPoint:
+        exp_setup = model.ExpSetup_wBaseline(
+            non_target_arrival_rate=non_target_arrival_rate,
+            attack_window_length=attack_window_length,
+            num_target_packets=num_target_packets,
+            num_target_servers=num_target_servers,
+            alpha=alpha,
+            num_baseline_wins_per_attack_win=1,
+            num_packets_to_deem_active=num_packets_to_deem_active,
+        )
+
+        num_attack_rounds = exp_setup.get_min_num_attack_rounds(
+            max_prob_error=max_prob_error
+        )
+        log(
+            INFO, "",
+            num_attack_rounds=num_attack_rounds,
+            num_packets_to_deem_active=num_packets_to_deem_active,
+        )
+
+        perf_point = AttackPerfPoint(
+            x=num_packets_to_deem_active,
+            num_attack_rounds=num_attack_rounds,
+            prob_target_as_non_target=exp_setup.prob_target_as_non_target(
+                num_attack_rounds=num_attack_rounds
+            ),
+            prob_non_target_as_target=exp_setup.prob_non_target_as_target(
+                num_attack_rounds=num_attack_rounds
+            ),
+            prob_target_active_in_attack_win=exp_setup.target_server.prob_active_in_attack_win,
+            prob_target_active_in_baseline_win=(
+                exp_setup.target_server.prob_active_in_baseline_win
+                if hasattr(exp_setup.target_server, "prob_active_in_baseline_win")
+                else None
+            ),
+            prob_non_target_active_in_attack_win=exp_setup.non_target_server.prob_active_in_attack_win,
+        )
+        log(
+            INFO, "",
+            num_packets_to_deem_active=num_packets_to_deem_active,
+            perf_point=perf_point,
+        )
+
+        return perf_point
+
+    attack_perf = _get_attack_perf_to_plot(
+        x_list=list(range(1, num_target_packets)),
+        attack_perf_point_for_given_x=attack_perf_point_for_given_x,
+    )
+    # log(
+    #     INFO, "",
+    #     attack_perf=attack_perf,
+    # )
+
+    title = (
+        r"$\mathrm{max-}p_{\mathrm{error}} =$" + fr"${max_prob_error}$, "
+        r"$T_{\mathrm{attack-win}} =$" + fr"${attack_window_length}$, "
+        r"$N_{\mathrm{target-packets}} =$" + fr"${num_target_packets}$, "
+        r"$N_{\mathrm{target-servers}} =$" + fr"${num_target_servers}$, "
+        r"$\mu_{\mathrm{non-target}} =$" + fr"${non_target_arrival_rate}$, "
+        fr"$\alpha = {alpha}$"
+    )
+    plot_name = (
+        "plot_attack_perf_vs_non_target_arrival_rate"
+        f"_max_prob_error_{max_prob_error}"
+        f"_attack_win_{attack_window_length}"
+        f"_ntarget_packets_{num_target_packets}"
+        f"_ntarget_servers_{num_target_servers}"
+        f"_nontarget_ar_{non_target_arrival_rate}"
+        f"_alpha_{alpha}"
+    )
+    _plot_attack_perf(
+        attack_perf=attack_perf,
+        x_label=r"$n_{\mathrm{packets-to-deem-active}}$",
+        title=title,
+        plot_name=plot_name,
+    )

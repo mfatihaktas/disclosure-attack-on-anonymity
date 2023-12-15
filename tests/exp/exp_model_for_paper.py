@@ -25,14 +25,24 @@ if __name__ == "__main__":
     num_target_packets = 5
     # num_target_servers = 1
     # num_target_servers = 2
-    # num_target_servers = 5
-    num_target_servers = 10
+    num_target_servers = 5
     alpha = 0.5
 
-    plot.plot_attack_perf_vs_non_target_arrival_rate(
+    # plot.plot_attack_perf_vs_non_target_arrival_rate(
+    #     max_prob_error=max_prob_error,
+    #     attack_window_length=attack_window_length,
+    #     num_target_packets=num_target_packets,
+    #     num_target_servers=num_target_servers,
+    #     alpha=alpha,
+    # )
+
+    num_target_packets = 20
+    non_target_arrival_rate = 1
+    plot.plot_attack_perf_vs_num_packets_to_deem_active(
         max_prob_error=max_prob_error,
         attack_window_length=attack_window_length,
         num_target_packets=num_target_packets,
         num_target_servers=num_target_servers,
         alpha=alpha,
+        non_target_arrival_rate=non_target_arrival_rate,
     )

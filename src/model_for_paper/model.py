@@ -125,12 +125,12 @@ class NonTargetServer(CandidateServer):
 class TargetServer(CandidateServer):
     num_target_servers: int
 
-    def get_prob_active_in_attack_win_by_reception_of_num_packets(
+    def get_prob_active_in_attack_win_w_num_packets_to_deem_active(
         self,
-        num_packets_to_deem_server_active: int,
+        num_packets_to_deem_active: int,
     ) -> float:
         """A candidate server is deemed "active" during an attack window,
-        only if it receives at least `num_packets_to_deem_server_active` many packets.
+        only if it receives at least `num_packets_to_deem_active` many packets.
         """
 
         if self.num_target_servers == 1:
@@ -145,7 +145,7 @@ class TargetServer(CandidateServer):
             prob_active_in_attack_win = 0
             for num_target_arrivals in range(self.num_target_packets + 1):
                 prob_num_target_arrivals = num_target_arrivals_rv.pdf(num_target_arrivals)
-                min_non_target_arrivals_for_active = max(0, num_packets_to_deem_server_active - num_target_arrivals)
+                min_non_target_arrivals_for_active = max(0, num_packets_to_deem_active - num_target_arrivals)
 
                 prob_active_in_attack_win += (
                     prob_num_target_arrivals
@@ -234,12 +234,12 @@ class NonTargetServer_wBaseline(NonTargetServer):
 @dataclasses.dataclass
 class TargetServer_wBaseline(TargetServer):
     num_baseline_wins_per_attack_win: int
-    num_packets_to_deem_server_active: Optional[int] = None
+    num_packets_to_deem_active: Optional[int] = None
 
     def get_prob_active_in_attack_win(self) -> float:
-        if self.num_packets_to_deem_server_active:
-            return self.get_prob_active_in_attack_win_by_reception_of_num_packets(
-                num_packets_to_deem_server_active=self.num_packets_to_deem_server_active
+        if self.num_packets_to_deem_active:
+            return self.get_prob_active_in_attack_win_w_num_packets_to_deem_active(
+                num_packets_to_deem_active=self.num_packets_to_deem_active
             )
         else:
             return super().get_prob_active_in_attack_win()
@@ -363,7 +363,7 @@ class ExpSetup_wTargetVsNonTarget(ExpSetup):
 @dataclasses.dataclass
 class ExpSetup_wBaseline(ExpSetup):
     num_baseline_wins_per_attack_win: int
-    num_packets_to_deem_server_active: Optional[int] = None
+    num_packets_to_deem_active: Optional[int] = None
 
     def get_target_server(self) -> TargetServer_wBaseline:
         return TargetServer_wBaseline(
@@ -372,7 +372,7 @@ class ExpSetup_wBaseline(ExpSetup):
             num_target_packets=self.num_target_packets,
             num_target_servers=self.num_target_servers,
             num_baseline_wins_per_attack_win=self.num_baseline_wins_per_attack_win,
-            num_packets_to_deem_server_active=self.num_packets_to_deem_server_active,
+            num_packets_to_deem_active=self.num_packets_to_deem_active,
         )
 
     def get_non_target_server(self) -> NonTargetServer_wBaseline:
