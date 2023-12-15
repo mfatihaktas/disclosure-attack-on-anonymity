@@ -25,7 +25,8 @@ if __name__ == "__main__":
     num_target_packets = 5
     # num_target_servers = 1
     # num_target_servers = 2
-    num_target_servers = 5
+    # num_target_servers = 5
+    num_target_servers = 10
     alpha = 0.5
 
     plot.plot_attack_perf_vs_non_target_arrival_rate(

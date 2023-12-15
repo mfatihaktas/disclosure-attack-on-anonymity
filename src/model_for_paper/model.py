@@ -2,6 +2,8 @@ import dataclasses
 import enum
 import math
 
+from typing import Optional
+
 from src.debug_utils import check, log, DEBUG, INFO
 from src.prob import random_variable
 
@@ -123,9 +125,12 @@ class NonTargetServer(CandidateServer):
 class TargetServer(CandidateServer):
     num_target_servers: int
 
-    def get_prob_active_in_attack_win(self) -> float:
-        """A candidate server is identified as "active" during an attack window,
-        only if it receives at least `num_target_packets` many packets.
+    def get_prob_active_in_attack_win_by_reception_of_num_packets(
+        self,
+        num_packets_to_deem_server_active: int,
+    ) -> float:
+        """A candidate server is deemed "active" during an attack window,
+        only if it receives at least `num_packets_to_deem_server_active` many packets.
         """
 
         if self.num_target_servers == 1:
@@ -140,7 +145,7 @@ class TargetServer(CandidateServer):
             prob_active_in_attack_win = 0
             for num_target_arrivals in range(self.num_target_packets + 1):
                 prob_num_target_arrivals = num_target_arrivals_rv.pdf(num_target_arrivals)
-                min_non_target_arrivals_for_active = max(0, self.num_target_packets - num_target_arrivals)
+                min_non_target_arrivals_for_active = max(0, num_packets_to_deem_server_active - num_target_arrivals)
 
                 prob_active_in_attack_win += (
                     prob_num_target_arrivals
@@ -163,6 +168,27 @@ class TargetServer(CandidateServer):
             #     prob_active_in_attack_win=prob_active_in_attack_win,
             # )
             return prob_active_in_attack_win
+
+    def get_prob_active_in_attack_win(self) -> float:
+        """A candidate server is deemed "active" during an attack window,
+        only if it receives at least one packet.
+        """
+
+        if self.num_target_servers == 1:
+            return 1
+
+        else:
+            num_target_arrivals_rv = random_variable.Binomial(
+                n=self.num_target_packets,
+                p=1 / self.num_target_servers,
+            )
+
+            prob_at_least_one_target_arrival = num_target_arrivals_rv.tail_prob(0)
+            prob_at_least_one_non_target_arrival = self.num_non_target_arrivals_rv.tail_prob(0)
+            return (
+                prob_at_least_one_target_arrival
+                + (1 - prob_at_least_one_target_arrival) * prob_at_least_one_non_target_arrival
+            )
 
     def _prob_error_w_binomial_sampling_dist(
         self,
@@ -208,6 +234,15 @@ class NonTargetServer_wBaseline(NonTargetServer):
 @dataclasses.dataclass
 class TargetServer_wBaseline(TargetServer):
     num_baseline_wins_per_attack_win: int
+    num_packets_to_deem_server_active: Optional[int] = None
+
+    def get_prob_active_in_attack_win(self) -> float:
+        if self.num_packets_to_deem_server_active:
+            return self.get_prob_active_in_attack_win_by_reception_of_num_packets(
+                num_packets_to_deem_server_active=self.num_packets_to_deem_server_active
+            )
+        else:
+            return super().get_prob_active_in_attack_win()
 
     def prob_error(
         self,
@@ -328,6 +363,7 @@ class ExpSetup_wTargetVsNonTarget(ExpSetup):
 @dataclasses.dataclass
 class ExpSetup_wBaseline(ExpSetup):
     num_baseline_wins_per_attack_win: int
+    num_packets_to_deem_server_active: Optional[int] = None
 
     def get_target_server(self) -> TargetServer_wBaseline:
         return TargetServer_wBaseline(
@@ -336,6 +372,7 @@ class ExpSetup_wBaseline(ExpSetup):
             num_target_packets=self.num_target_packets,
             num_target_servers=self.num_target_servers,
             num_baseline_wins_per_attack_win=self.num_baseline_wins_per_attack_win,
+            num_packets_to_deem_server_active=self.num_packets_to_deem_server_active,
         )
 
     def get_non_target_server(self) -> NonTargetServer_wBaseline:
