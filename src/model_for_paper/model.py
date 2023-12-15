@@ -28,15 +28,19 @@ class CandidateServer:
             mu=self.attack_window_length * self.non_target_arrival_rate
         )
         self.prob_active_in_attack_win = self.get_prob_active_in_attack_win()
-        self.prob_active_in_baseline_win = (
-            self.num_non_target_arrivals_rv.tail_prob(self.num_target_packets - 1)
-        )
+        self.prob_active_in_baseline_win = self.get_prob_active_in_baseline_win()
 
         log(
             INFO, "",
             prob_active_in_attack_win=self.prob_active_in_attack_win,
             prob_active_in_baseline_win=self.prob_active_in_baseline_win,
         )
+
+    def get_prob_active_in_baseline_win_w_num_packets_to_deem_active(
+        self,
+        num_packets_to_deem_active: float,
+    ) -> float:
+        return self.num_non_target_arrivals_rv.tail_prob(num_packets_to_deem_active - 1)
 
     def _gaussian_sampling_dist(
         self,
@@ -132,7 +136,6 @@ class TargetServer(CandidateServer):
         """A candidate server is deemed "active" during an attack window,
         only if it receives at least `num_packets_to_deem_active` many packets.
         """
-
         if self.num_target_servers == 1:
             return 1
 
@@ -164,12 +167,15 @@ class TargetServer(CandidateServer):
                 # )
 
             # log(
-            #     INFO, "",
+            #     INFO, "***",
             #     prob_active_in_attack_win=prob_active_in_attack_win,
+            #     prob_active_in_baseline_win=self.num_non_target_arrivals_rv.tail_prob(
+            #         num_packets_to_deem_active - 1
+            #     ),
             # )
             return prob_active_in_attack_win
 
-    def get_prob_active_in_attack_win(self) -> float:
+    def _get_prob_active_in_attack_win(self) -> float:
         """A candidate server is deemed "active" during an attack window,
         only if it receives at least one packet.
         """
@@ -217,9 +223,29 @@ class TargetServer(CandidateServer):
 
 
 @dataclasses.dataclass
-class NonTargetServer_wBaseline(NonTargetServer):
+class Server_wBaseline:
     num_baseline_wins_per_attack_win: int
+    num_packets_to_deem_active: Optional[int]
 
+    def get_prob_active_in_attack_win(self) -> float:
+        if self.num_packets_to_deem_active:
+            return self.get_prob_active_in_attack_win_w_num_packets_to_deem_active(
+                num_packets_to_deem_active=self.num_packets_to_deem_active
+            )
+        else:
+            return self._get_prob_active_in_attack_win()
+
+    def get_prob_active_in_baseline_win(self) -> float:
+        num_packets_to_deem_active = (
+            self.num_packets_to_deem_active if self.num_packets_to_deem_active else 1
+        )
+        return self.get_prob_active_in_baseline_win_w_num_packets_to_deem_active(
+            num_packets_to_deem_active=num_packets_to_deem_active,
+        )
+
+
+@dataclasses.dataclass
+class NonTargetServer_wBaseline(NonTargetServer, Server_wBaseline):
     def prob_error(
         self,
         num_attack_rounds: int,
@@ -230,20 +256,12 @@ class NonTargetServer_wBaseline(NonTargetServer):
         )
         return sampling_rv.tail_prob(threshold_to_identify_as_target)
 
+    def get_prob_active_in_attack_win(self) -> float:
+        return self.get_prob_active_in_baseline_win()
+
 
 @dataclasses.dataclass
-class TargetServer_wBaseline(TargetServer):
-    num_baseline_wins_per_attack_win: int
-    num_packets_to_deem_active: Optional[int] = None
-
-    def get_prob_active_in_attack_win(self) -> float:
-        if self.num_packets_to_deem_active:
-            return self.get_prob_active_in_attack_win_w_num_packets_to_deem_active(
-                num_packets_to_deem_active=self.num_packets_to_deem_active
-            )
-        else:
-            return super().get_prob_active_in_attack_win()
-
+class TargetServer_wBaseline(TargetServer, Server_wBaseline):
     def prob_error(
         self,
         num_attack_rounds: int,
@@ -271,7 +289,11 @@ class ExpSetup:
         log(
             INFO, "",
             target_server=self.target_server,
+            prob_target_server_active_in_attack_win=self.target_server.prob_active_in_attack_win,
+            prob_target_server_active_in_baseline_win=self.target_server.prob_active_in_baseline_win,
             non_target_server=self.non_target_server,
+            prob_non_target_server_active_in_attack_win=self.non_target_server.prob_active_in_attack_win,
+            prob_non_target_server_active_in_baseline_win=self.non_target_server.prob_active_in_baseline_win,
             target_detection_threshold=self.target_detection_threshold,
         )
 
@@ -381,6 +403,7 @@ class ExpSetup_wBaseline(ExpSetup):
             attack_window_length=self.attack_window_length,
             num_target_packets=self.num_target_packets,
             num_baseline_wins_per_attack_win=1,
+            num_packets_to_deem_active=self.num_packets_to_deem_active,
         )
 
     def get_detection_threshold(self) -> float:
